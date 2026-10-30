@@ -1,345 +1,301 @@
-# Askar Turanazarov / 1542 /
+# Askar Turanazarov
 
 # src/app.py
-# Основной файл приложения Streamlit для запуска и демонстрации работы модели CatBoost.
-# Запуск программы осуществляется в терминале: streamlit run src/app.py
+# Streamlit UI for the flight delay risk model (CatBoost pipeline + SHAP + economic impact).
+# Run from the project root:  streamlit run src/app.py
+# UI languages: English (default), Uzbek, Russian - auto-selected from the browser locale.
 
-
-import streamlit as st
-import pandas as pd
-import joblib
 import os
 import sys
 import calendar
 from datetime import date
-import plotly.graph_objects as go
+
+import joblib
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.analytics import FlightAnalytics
-from src.model_loader import resolve_model_path
-
-# --- ПУТИ ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOOKUP_PATH = os.path.join(BASE_DIR, 'models', 'lookup_data.joblib')
-
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
-st.set_page_config(page_title="Flight Risk Analytics Pro", layout="wide")
+from src.analytics import FlightAnalytics            # noqa: E402
+from src.model_loader import resolve_model_path      # noqa: E402
+from src.i18n import LANGS, SESSION_KEY, t, detect_language  # noqa: E402
+
+LOOKUP_PATH = os.path.join(BASE_DIR, "models", "lookup_data.joblib")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+LOGOS_DIR = os.path.join(BASE_DIR, "logos")
+FIGURES_DIR = os.path.join(BASE_DIR, "reports", "figures")
+DATA_YEAR = 2015  # the dataset covers US flights of 2015
+
+st.set_page_config(page_title="Flight Risk Analytics", page_icon="✈️", layout="wide")
+
+# Language: detected once from the browser locale, then driven by the sidebar selector.
+if SESSION_KEY not in st.session_state:
+    st.session_state[SESSION_KEY] = detect_language()
 
 
-# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
-def format_duration(minutes):
+# --- helpers ---------------------------------------------------------------
+
+def format_duration(minutes) -> str:
     h, m = divmod(int(minutes), 60)
-    return f"{h} ч {m} мин" if h > 0 else f"{m} мин"
+    return t("duration.h_m", h=h, m=m) if h > 0 else t("duration.m", m=m)
 
 
 def calculate_economic_impact(prob, distance_miles):
-    # Константы (базируются на данных FAA)
-    COST_PER_MIN_AIRLINE = 110.0
-    PASSENGER_TIME_VAL_HOUR = 62.50
+    """Expected loss of one flight, based on FAA cost assumptions (USD)."""
+    COST_PER_MIN_AIRLINE = 110.0        # airline operating cost per delay minute
+    PASSENGER_TIME_VAL_HOUR = 62.50     # FAA value of travel time savings per passenger-hour
     pax = 150 if distance_miles < 1000 else 280
-    avg_delay = 52
+    avg_delay = 52                      # average delay length, minutes
 
-    # 1. Прямой ущерб
     direct_flight_cost = avg_delay * COST_PER_MIN_AIRLINE
     pax_loss = (avg_delay / 60) * PASSENGER_TIME_VAL_HOUR * pax
 
-    # 2. Сетевой эффект (Reactionary delay) — фиксированный коэффициент 2.2x от прямых потерь
+    # Knock-on (reactionary) delays: total event cost is 2.2x the direct losses
     total_event_cost = (direct_flight_cost + pax_loss) * 2.2
     network_impact = total_event_cost - (direct_flight_cost + pax_loss)
 
-    # 3. Математическое ожидание риска
-    expected_risk_value = prob * total_event_cost
-
     return {
-        "expected": expected_risk_value,
+        "expected": prob * total_event_cost,
         "total_event": total_event_cost,
         "direct": direct_flight_cost,
         "pax": pax_loss,
-        "network": network_impact
+        "network": network_impact,
     }
 
 
 def get_risk_level(prob):
-    # Пороги по сырой вероятности модели: базовая доля задержек 18.9%, порог решения 0.37
-    if prob < 0.2: return "🔵 Низкий", "green"
-    if prob < 0.37: return "🟡 Умеренный", "orange"
-    if prob < 0.55: return "🟠 Высокий", "red"
-    return "🔴 Критический", "darkred"
+    """Risk bucket by raw probability (base delay rate 18.9 %, decision threshold 0.37)."""
+    if prob < 0.2:
+        return t("risk.low"), "green"
+    if prob < 0.37:
+        return t("risk.moderate"), "orange"
+    if prob < 0.55:
+        return t("risk.high"), "red"
+    return t("risk.critical"), "darkred"
 
 
-# --- ЗАГРУЗКА РЕСУРСОВ ---
-@st.cache_resource(show_spinner="Загрузка модели (при первом запуске скачивается с Hugging Face)...")
+def feature_label(name: str) -> str:
+    """Human-readable, translated feature name (falls back to the technical name)."""
+    key = f"feature.{name}"
+    label = t(key)
+    return name if label == key else label
+
+
+# --- resources ---------------------------------------------------------------
+
+@st.cache_resource(show_spinner=False)
 def load_all():
-    # Локальный models/model_pipeline_main.pkl, иначе скачивание с Hugging Face Hub (см. src/model_loader.py)
+    # Local models/model_pipeline_main.pkl if present, otherwise downloaded from Hugging Face Hub
     model = joblib.load(resolve_model_path())
     data = joblib.load(LOOKUP_PATH)
     try:
-        air_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'airports.csv'))
-        # Собираем расширенный словарь данных об аэропортах
-        air_info = air_df.set_index('IATA_CODE').to_dict('index')
-        line_names = pd.read_csv(os.path.join(BASE_DIR, 'data', 'airlines.csv')).set_index('IATA_CODE')[
-            'AIRLINE'].to_dict()
-    except:
+        air_df = pd.read_csv(os.path.join(DATA_DIR, "airports.csv"))
+        air_info = air_df.set_index("IATA_CODE").to_dict("index")
+        line_names = pd.read_csv(os.path.join(DATA_DIR, "airlines.csv")).set_index("IATA_CODE")["AIRLINE"].to_dict()
+    except Exception:
         air_info, line_names = {}, {}
     return model, data, air_info, line_names
 
 
-model, data, air_info, line_names = load_all()
+with st.spinner(t("model.loading")):
+    model, data, air_info, line_names = load_all()
 
-# Постобработка предсказаний: индекс риска для шкалы, сравнение с базовой долей задержек, SHAP
 analytics = FlightAnalytics(model)
 
-# --- ИНТЕРФЕЙС (SIDEBAR) ---
-st.title("📊 Аналитическая система прогнозирования авиарисков - риск задержки авиарейса.")
+# --- sidebar -----------------------------------------------------------------
 
 with st.sidebar:
-    st.header("📝 Параметры рейса")
-    airline_code = st.selectbox("Авиакомпания", data['airlines'],
-                                format_func=lambda x: f"{line_names.get(x, 'Unknown')} ({x})")
-    origin_code = st.selectbox("Аэропорт вылета", data['airports'],
-                               format_func=lambda x: f"{x} - {air_info.get(x, {}).get('AIRPORT', 'Unknown')}")
+    st.selectbox(t("sidebar.language"), options=list(LANGS), format_func=LANGS.get, key=SESSION_KEY)
+    st.header(t("sidebar.header"))
 
-    dest_list = data['lookup'][data['lookup']['ORIGIN_AIRPORT'] == origin_code]['DESTINATION_AIRPORT'].unique()
-    dest_code = st.selectbox("Аэропорт прилета", sorted(dest_list),
-                             format_func=lambda x: f"{x} - {air_info.get(x, {}).get('AIRPORT', 'Unknown')}")
+    unknown = t("sidebar.unknown")
+    airline_code = st.selectbox(
+        t("sidebar.airline"), data["airlines"],
+        format_func=lambda x: f"{line_names.get(x, unknown)} ({x})",
+    )
+    origin_code = st.selectbox(
+        t("sidebar.origin"), data["airports"],
+        format_func=lambda x: f"{x} - {air_info.get(x, {}).get('AIRPORT', unknown)}",
+    )
+    dest_list = data["lookup"][data["lookup"]["ORIGIN_AIRPORT"] == origin_code]["DESTINATION_AIRPORT"].unique()
+    dest_code = st.selectbox(
+        t("sidebar.destination"), sorted(dest_list),
+        format_func=lambda x: f"{x} - {air_info.get(x, {}).get('AIRPORT', unknown)}",
+    )
 
     st.divider()
-    month = st.slider("Месяц", 1, 12, 3)
-    days_in_month = calendar.monthrange(2015, month)[1]      # данные за 2015 год
-    day = st.slider("День", 1, days_in_month, min(15, days_in_month))
-    dep_hour = st.slider("Час вылета", 0, 23, 12)
+    month = st.slider(t("sidebar.month"), 1, 12, 3)
+    days_in_month = calendar.monthrange(DATA_YEAR, month)[1]
+    day = st.slider(t("sidebar.day"), 1, days_in_month, min(15, days_in_month))
+    dep_hour = st.slider(t("sidebar.dep_hour"), 0, 23, 12)
 
-# --- ГЛАВНЫЙ ЭКРАН ---
-tab1, tab2 = st.tabs(["🚀 Анализ и Прогноз", "📈 Обоснование модели"])
+# --- main --------------------------------------------------------------------
+
+st.title(t("app.title"))
+tab1, tab2 = st.tabs([t("tab.analysis"), t("tab.model")])
 
 with tab1:
-    route = data['lookup'][(data['lookup']['ORIGIN_AIRPORT'] == origin_code) &
-                           (data['lookup']['DESTINATION_AIRPORT'] == dest_code)].iloc[0]
+    route = data["lookup"][(data["lookup"]["ORIGIN_AIRPORT"] == origin_code) &
+                           (data["lookup"]["DESTINATION_AIRPORT"] == dest_code)].iloc[0]
+    origin_full = air_info.get(origin_code, {})
+    dest_full = air_info.get(dest_code, {})
+    origin_city = origin_full.get("CITY", origin_code)
+    dest_city = dest_full.get("CITY", dest_code)
 
-    # ВЕРХНЯЯ ПАНЕЛЬ С ДАННЫМИ
-    c1, gap, c2, c3 = st.columns([1, 0.2, 0.6, 1.1])
+    # Top panel: route, flight details, airline
+    c1, _gap, c2, c3 = st.columns([1, 0.2, 0.6, 1.1])
     with c1:
-        st.markdown("\t**📍 Маршрут**")
-
-        # Получаем данные из air_info (названия и города)
-        origin_full = air_info.get(origin_code, {})
-        dest_full = air_info.get(dest_code, {})
-
-        # Используем Flexbox для выравнивания
+        st.markdown(t("route.header"))
         st.markdown(f"""
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-top: -20px;">
-                    <div style="flex: 1;">
-                        <h1 style="margin:0; font-family: serif; font-size: 2.3rem; line-height: 1;">{origin_code}</h1>
-                        <div style="font-weight: bold; font-size: 0.85rem; margin-top: 2px; font-family: sans-serif;">{origin_full.get('AIRPORT', 'Unknown')}</div>
-                        <div style="color: gray; font-size: 0.75rem; font-family: sans-serif;">{origin_full.get('CITY', '')}, {origin_full.get('STATE', '')}</div>
-                    </div>
-                    <div style="flex: 0.2; text-align: center; padding-top: 22px; font-size: 1.5rem; color: #4A90E2;">
-                        ➔
-                    </div>
-                    <div style="flex: 1; text-align: right;">
-                        <h1 style="margin:0; font-family: serif; font-size: 2.3rem; line-height: 1;">{dest_code}</h1>
-                        <div style="font-weight: bold; font-size: 0.85rem; margin-top: 2px; font-family: sans-serif;">{dest_full.get('AIRPORT', 'Unknown')}</div>
-                        <div style="color: gray; font-size: 0.75rem; font-family: sans-serif;">{dest_full.get('CITY', '')}, {dest_full.get('STATE', '')}</div>
-                    </div>
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-top:-20px;">
+                <div style="flex:1;">
+                    <h1 style="margin:0; font-family:serif; font-size:2.3rem; line-height:1;">{origin_code}</h1>
+                    <div style="font-weight:bold; font-size:0.85rem; margin-top:2px; font-family:sans-serif;">{origin_full.get('AIRPORT', unknown)}</div>
+                    <div style="color:gray; font-size:0.75rem; font-family:sans-serif;">{origin_full.get('CITY', '')}, {origin_full.get('STATE', '')}</div>
                 </div>
-            """, unsafe_allow_html=True)
+                <div style="flex:0.2; text-align:center; padding-top:22px; font-size:1.5rem; color:#4A90E2;">➔</div>
+                <div style="flex:1; text-align:right;">
+                    <h1 style="margin:0; font-family:serif; font-size:2.3rem; line-height:1;">{dest_code}</h1>
+                    <div style="font-weight:bold; font-size:0.85rem; margin-top:2px; font-family:sans-serif;">{dest_full.get('AIRPORT', unknown)}</div>
+                    <div style="color:gray; font-size:0.75rem; font-family:sans-serif;">{dest_full.get('CITY', '')}, {dest_full.get('STATE', '')}</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
 
-        # выведем отдельные переменные городов для использования в блоке анализа
-        origin_city = air_info.get(origin_code, {}).get('CITY', '')         # для SHAP-резюме
-        destin_city = air_info.get(dest_code, {}).get('CITY', '')           # для SHAP-резюме
     with c2:
-        st.write("**✈️ Детали полета (рейса)**")
-        dist_km = int(route['DISTANCE'] * 1.609)
-        st.write(f"Расстояние:    **{dist_km:,} км**".replace(',', ' '))
-        st.write(f"Время полёта:  **{format_duration(route['SCHEDULED_TIME'])}**")
+        st.markdown(t("flight.header"))
+        dist_km = f"{int(route['DISTANCE'] * 1.609):,}".replace(",", " ")
+        st.write(t("flight.distance", km=dist_km))
+        st.write(t("flight.time", duration=format_duration(route["SCHEDULED_TIME"])))
 
     with c3:
-        st.write("**🛩 Авиакомпания**")
-        # Создаём две под-колонки для размещения инфо и лого
+        st.markdown(t("airline.header"))
         text_col, logo_col = st.columns([1, 1.2])
-
-        # Подгружаем лого авиакомпаний:
         with logo_col:
-            logo_path = f'logos/{airline_code}.png'
-            try:
+            logo_path = os.path.join(LOGOS_DIR, f"{airline_code}.png")
+            if os.path.isfile(logo_path):
                 st.image(logo_path)
-            except:
-                st.write('🛩')
+            else:
+                st.write("🛩")
         with text_col:
-            st.write(line_names.get(airline_code, "Unknown Airline"))
-            st.caption(f"Код ИАТА: **{airline_code}**")
+            st.write(line_names.get(airline_code, t("airline.unknown")))
+            st.caption(t("airline.iata", code=airline_code))
 
     st.divider()
-
     col_map, col_res = st.columns([1.3, 1])
 
     with col_map:
-        # Карта
         if origin_code in air_info and dest_code in air_info:
             fig = go.Figure(go.Scattergeo(
-                locationmode='USA-states',
-                lon=[air_info[origin_code]['LONGITUDE'], air_info[dest_code]['LONGITUDE']],
-                lat=[air_info[origin_code]['LATITUDE'], air_info[dest_code]['LATITUDE']],
-                mode='lines+markers',
-                line=dict(width=5, color='#FF4B4B'),
-                marker=dict(size=15, color='#1C83E1')
+                locationmode="USA-states",
+                lon=[air_info[origin_code]["LONGITUDE"], air_info[dest_code]["LONGITUDE"]],
+                lat=[air_info[origin_code]["LATITUDE"], air_info[dest_code]["LATITUDE"]],
+                mode="lines+markers",
+                line=dict(width=5, color="#FF4B4B"),
+                marker=dict(size=15, color="#1C83E1"),
             ))
-            fig.update_layout(height=400, margin={"r": 0, "t": 0, "l": 0, "b": 0}, geo_scope='usa')
-            st.plotly_chart(fig, use_container_width=True)
+            fig.update_layout(height=400, margin={"r": 0, "t": 0, "l": 0, "b": 0}, geo_scope="usa")
+            st.plotly_chart(fig, width="stretch")
 
-
+    impact = None
     with col_res:
-        if st.button("ПРОВЕСТИ АНАЛИЗ РИСКОВ", type="primary", use_container_width=True):
-            # 1. Формируем входные данные: день недели из даты (2015), прилёт из планового времени полёта
-            flight_date = date(2015, month, day)
-            day_of_week = flight_date.isoweekday()                   # 1 = понедельник ... 7 = воскресенье
-            sched_time = int(route['SCHEDULED_TIME'])
+        if st.button(t("button.analyze"), type="primary", width="stretch"):
+            # 1. Model input: weekday from the date (2015), arrival from the scheduled flight time
+            flight_date = date(DATA_YEAR, month, day)
+            day_of_week = flight_date.isoweekday()          # 1 = Monday ... 7 = Sunday (dataset convention)
+            sched_time = int(route["SCHEDULED_TIME"])
             arr_minutes = (dep_hour * 60 + sched_time) % (24 * 60)
             input_df = pd.DataFrame([{
-                'MONTH': month, 'DAY': day, 'DAY_OF_WEEK': day_of_week, 'AIRLINE': airline_code,
-                'ORIGIN_AIRPORT': origin_code, 'DESTINATION_AIRPORT': dest_code,
-                'SCHEDULED_DEPARTURE': dep_hour * 100, 'DISTANCE': route['DISTANCE'],
-                'SCHEDULED_TIME': route['SCHEDULED_TIME'],
-                'SCHEDULED_ARRIVAL': (arr_minutes // 60) * 100 + arr_minutes % 60,
-                'DEP_HOUR': dep_hour, 'ARR_HOUR': arr_minutes // 60,
-                'IS_WEEKEND': int(day_of_week in (6, 7))
+                "MONTH": month, "DAY": day, "DAY_OF_WEEK": day_of_week, "AIRLINE": airline_code,
+                "ORIGIN_AIRPORT": origin_code, "DESTINATION_AIRPORT": dest_code,
+                "SCHEDULED_DEPARTURE": dep_hour * 100, "DISTANCE": route["DISTANCE"],
+                "SCHEDULED_TIME": route["SCHEDULED_TIME"],
+                "SCHEDULED_ARRIVAL": (arr_minutes // 60) * 100 + arr_minutes % 60,
+                "DEP_HOUR": dep_hour, "ARR_HOUR": arr_minutes // 60,
+                "IS_WEEKEND": int(day_of_week in (6, 7)),
             }])
 
-            # 2. Сырая вероятность задержки от CatBoost — главная величина, от неё считаются вердикт и экономика
+            # 2. Raw probability from CatBoost: the primary number, drives the verdict and the economics
             prob = float(model.predict_proba(input_df)[0][1])
             delay_predicted = analytics.is_delay_predicted(prob)
 
-            # 3. Индекс риска — только для визуальной шкалы (растяжение, не калибровка)
+            # 3. Risk index: visual stretch for the bar only (not a calibration)
             risk_idx = analytics.risk_index(prob)
 
-            # 4. Сравнение с базовой долей задержек в данных (18.9%)
+            # 4. Comparison with the base delay rate of the data (18.9 %)
             ratio, rel_status = analytics.relative_risk(prob)
-            rel_text = {"lower": "ниже средней доли задержек",
-                        "typical": "на уровне средней доли задержек",
-                        "higher": "выше средней доли задержек"}[rel_status]
 
-            # 5. Экономика — от сырой вероятности
-            impact = calculate_economic_impact(prob, route['DISTANCE'])
+            # 5. Economics from the raw probability
+            impact = calculate_economic_impact(prob, route["DISTANCE"])
 
-            # --- ВИЗУАЛИЗАЦИЯ РЕЗУЛЬТАТОВ ---
+            # --- results ---
             risk_label, color = get_risk_level(prob)
-            st.markdown(f"### Уровень риска: <span style='color:{color}'>{risk_label}</span>", unsafe_allow_html=True)
-            st.progress(risk_idx, text=f"Индекс риска (шкала): {risk_idx:.0%}")
+            st.markdown(f"### {t('risk.level')}: <span style='color:{color}'>{risk_label}</span>",
+                        unsafe_allow_html=True)
+            st.progress(risk_idx, text=t("risk.index_bar", idx=f"{risk_idx:.0%}"))
 
             col_p1, col_p2 = st.columns(2)
-            col_p1.metric("Вероятность задержки", f"{prob:.1%}",
-                          help=f"Сырая вероятность модели. Порог решения {analytics.threshold:.2f}.")
-            col_p2.metric("Относительно средней (18.9%)", f"{ratio:.1f}×", help=rel_text)
+            col_p1.metric(t("metric.prob"), f"{prob:.1%}",
+                          help=t("metric.prob_help", thr=f"{analytics.threshold:.2f}"))
+            col_p2.metric(t("metric.rel", base=f"{analytics.base_rate:.1%}"), f"{ratio:.1f}×",
+                          help=t(f"rel.{rel_status}"))
 
+            thr_text = f"{analytics.threshold:.2f}"
             if delay_predicted:
-                st.error(f"Вердикт модели: задержка вероятна (вероятность ≥ {analytics.threshold:.2f}).")
+                st.error(t("verdict.delay", thr=thr_text))
             else:
-                st.success(f"Вердикт модели: задержка маловероятна (вероятность < {analytics.threshold:.2f}).")
+                st.success(t("verdict.ontime", thr=thr_text))
 
-            st.warning(f"Финансовый риск (Risk Value): **${impact['expected']:,.0f}**")
+            st.warning(t("econ.risk_value", value=f"{impact['expected']:,.0f}"))
 
-            # --- ВАЖНОЕ - SHAP АНАЛИЗ ---
-            # Текстовое краткое резюме для SHAP-анализа (интеллектуальный помощник предсказанию, интерпретация)
+            # --- SHAP summary ---
             shap_data = analytics.get_local_shap(input_df)
-
-            # Словарь для перевода признаков на русский язык:
-            names_map = {
-                'MONTH': 'Месяц',
-                'DAY': 'День',
-                'DAY_OF_WEEK': 'День недели',
-                'AIRLINE': 'Авиакомпания',
-                'ORIGIN_AIRPORT': 'Аэропорт вылета',
-                'DESTINATION_AIRPORT': 'Аэропорт прилёта',
-                'DEP_HOUR': 'Час вылета',
-                'SCHEDULED_TIME': 'Время в пути',
-                'DISTANCE': 'Расстояние',
-                'ROUTE': 'Маршрут',
-                'plan_speed': 'Скорость (плановая)',
-                'SCHEDULED_ARRIVAL': 'Прибытие (по расп.)',
-                'SCHEDULED_DEPARTURE': 'Вылет (по расп.)'
-            }
-
-            # Технические колонки -> подписи для UI; русские названия признаков, иначе оригинал
-            shap_data = shap_data.rename(columns={'feature': 'Признак', 'contribution': 'Вклад'})
-            shap_data['Признак'] = shap_data['Признак'].map(names_map).fillna(shap_data['Признак'])
-
-            # Далее работа блока краткого SHAP-анализа
+            shap_data["label"] = shap_data["feature"].map(feature_label)
             top_factor = shap_data.iloc[0]
-            direction = "повышает" if top_factor['Вклад'] > 0 else "снижает"
-            st.info(
-                f"💡 **Анализ:** Основным фактором сегодня является **{top_factor['Признак']}**, который {direction} риск задержки рейса.")
-    # st.markdown('---')
+            direction = t("direction.up") if top_factor["contribution"] > 0 else t("direction.down")
+            st.info(t("insight", feature=top_factor["label"], direction=direction))
 
-    # Блок подробной детализации предсказания модели:
-    try:
-        # Временная "переменная"-заглушка для правильной отрисовки
-        _ = impact['total_event']
-
-        # Выносим две отдельные колонки под детализированные отчёты предсказания (детализация ущерба + SHAP)
+    # Detailed panels appear only after an analysis has been run
+    if impact is not None:
         details1, details2 = st.columns(2)
 
-        # Первая колонка с детализацией ущерба
         with details1:
-            with st.expander("Детализация потенциального ущерба"):
-                st.write(f"Общий ущерб при наступлении задержки: **${impact['total_event']:,.0f}**")
-                # st.markdown('---')
-                st.write(f'''Финансовый риск: Вероятность задержки **Х** Общий ущерб при наступлении задержки рейса.
-                \nПоэтому он равен `{impact['expected']:,.0f}USD` при вероятности `{prob:.1%}` общего ущерба 
-                `{impact['total_event']:,.0f}USD`.''')
+            with st.expander(t("econ.expander")):
+                st.write(t("econ.total", value=f"{impact['total_event']:,.0f}"))
+                st.write(t("econ.formula",
+                           expected=f"{impact['expected']:,.0f}",
+                           prob=f"{prob:.1%}",
+                           total=f"{impact['total_event']:,.0f}"))
                 st.markdown(f"""
                 ---
-                * **Сетевой эффект (каскадные сбои):** `${impact['network']:,.0f}`
-                * **Прямые расходы авиакомпании:** `${impact['direct']:,.0f}`
-                * **Потери времени пассажиров:** `${impact['pax']:,.0f}`
+                * **{t('econ.network')}:** `${impact['network']:,.0f}`
+                * **{t('econ.direct')}:** `${impact['direct']:,.0f}`
+                * **{t('econ.pax')}:** `${impact['pax']:,.0f}`
                 """)
-                st.caption("Методика расчета: FAA Value of Travel Time Savings (VTTS) & Airline Operational Costs.")
+                st.caption(t("econ.method"))
 
-        # вторая колонка с SHAP-анализом конкретного рейса
         with details2:
-            with st.expander("🔍 Почему такой результат? (SHAP-анализ факторов)"):
-                st.write(
-                    f"Вклад параметров в итоговую вероятность (значения Шепли) на рейсе из {origin_city} в {destin_city}:")
-                # Получаем данные SHAP из нашего нового класса
-
-                # Рисуем горизонтальный график
+            with st.expander(t("shap.expander")):
+                st.write(t("shap.intro", origin=origin_city, dest=dest_city))
                 fig_shap = px.bar(
-                    shap_data,
-                    x='Вклад',
-                    y='Признак',
-                    orientation='h',
-                    color='Вклад',
-                    color_continuous_scale='RdYlGn_r',  # Красный для +риска, зеленый для -риска
-                    text_auto='.2f'
+                    shap_data, x="contribution", y="label", orientation="h",
+                    color="contribution", color_continuous_scale="RdYlGn_r", text_auto=".2f",
+                    labels={"contribution": t("shap.axis_contrib"), "label": t("shap.axis_feature")},
                 )
                 fig_shap.update_layout(height=300, showlegend=False, margin=dict(l=20, r=20, t=20, b=20))
-                st.plotly_chart(fig_shap, use_container_width=True)
-
-                st.caption(
-                    "Положительные значения (красный) повышают риск задержки, отрицательные (зеленый) — снижают.")
-    except NameError:
-        pass
+                st.plotly_chart(fig_shap, width="stretch")
+                st.caption(t("shap.caption"))
 
 with tab2:
-    st.header("Метрики качества (обучено на 2.1 млн строк)")
-
+    st.header(t("metrics.header"))
     m1, m2 = st.columns(2)
     with m1:
-        st.info("Итоговый ROC-AUC модели на тестовой выборке: **0.786**")
-        st.image("reports/figures/pr_curve_optimal_threshold.png",
-                 caption="Выбор порога классификации (Precision-Recall)")
+        st.info(t("metrics.auc"))
+        st.image(os.path.join(FIGURES_DIR, "pr_curve_optimal_threshold.png"), caption=t("metrics.pr_caption"))
     with m2:
-        st.info("Итоговый Recall (полнота) модели на тестовой выборке: **0.82**")
-        st.image("reports/figures/CatBoost Feature Importance.jpg",
-                 caption="Вклад признаков в прогноз (Feature Importance)")
-
-
-
-
-
-
-
-
-
+        st.info(t("metrics.recall"))
+        st.image(os.path.join(FIGURES_DIR, "CatBoost Feature Importance.jpg"), caption=t("metrics.fi_caption"))
