@@ -40,7 +40,7 @@ STRINGS = {
     "risk.index_bar": "Xavf indeksi (koʻrgazmali shkala): {idx}",
     "metric.prob": "Kechikish ehtimoli",
     "metric.prob_help": "Modelning xom (oʻzgartirilmagan) ehtimoli. Qaror chegarasi: {thr}.",
-    "metric.rel": "Oʻrtacha kechikish ulushiga nisbatan ({base})",
+    "metric.rel": "Oʻrtachaga nisbatan ({base})",
     "rel.lower": "oʻrtacha kechikish ulushidan past",
     "rel.typical": "oʻrtacha kechikish ulushi darajasida",
     "rel.higher": "oʻrtacha kechikish ulushidan yuqori",
