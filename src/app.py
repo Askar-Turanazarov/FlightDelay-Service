@@ -21,7 +21,7 @@ if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
 from src.analytics import FlightAnalytics            # noqa: E402
-from src.model_loader import resolve_model_path      # noqa: E402
+from src.model_loader import resolve_model_path, model_variant  # noqa: E402
 from src.i18n import LANGS, SESSION_KEY, t, detect_language  # noqa: E402
 
 LOOKUP_PATH = os.path.join(BASE_DIR, "models", "lookup_data.joblib")
@@ -29,6 +29,14 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 LOGOS_DIR = os.path.join(BASE_DIR, "logos")
 FIGURES_DIR = os.path.join(BASE_DIR, "reports", "figures")
 DATA_YEAR = 2015  # the dataset covers US flights of 2015
+MODEL_VARIANT = model_variant()  # "compact" (default, public demo) or "full" (diploma reference)
+
+# Test-set metrics of both variants (same 20 % hold-out). Source of truth: reports/metrics/
+# model_results.txt + recall085_results.txt (full) and compact_model_results.txt (compact).
+MODEL_METRICS = {
+    "full":    dict(auc="0.786", recall="0.82", precision="0.31", size="433 MB", ram="1.5 GB", ctr="4", script="train_final.py"),
+    "compact": dict(auc="0.779", recall="0.82", precision="0.30", size="114 MB", ram="0.6 GB", ctr="3", script="train_compact.py"),
+}
 
 st.set_page_config(page_title="Flight Risk Analytics", page_icon="✈️", layout="wide")
 
@@ -89,7 +97,7 @@ def feature_label(name: str) -> str:
 
 @st.cache_resource(show_spinner=False)
 def load_all():
-    # Local models/model_pipeline_main.pkl if present, otherwise downloaded from Hugging Face Hub
+    # Local models/<variant>.pkl if present, otherwise downloaded from Hugging Face Hub
     model = joblib.load(resolve_model_path())
     data = joblib.load(LOOKUP_PATH)
     try:
@@ -292,10 +300,24 @@ with tab1:
 
 with tab2:
     st.header(t("metrics.header"))
+    current = MODEL_METRICS[MODEL_VARIANT]
+    st.caption(t(f"metrics.loaded.{MODEL_VARIANT}", size=current["size"]))
     m1, m2 = st.columns(2)
-    with m1:
-        st.info(t("metrics.auc"))
+    m1.info(t("metrics.auc", auc=current["auc"]))
+    m2.info(t("metrics.recall", recall=current["recall"], precision=current["precision"]))
+
+    st.subheader(t("metrics.variants_header"))
+    st.markdown(t("metrics.variants_text"))
+    rows = [("auc", "row_auc"), ("recall", "row_recall"), ("precision", "row_precision"), ("size", "row_size"),
+            ("ram", "row_ram"), ("ctr", "row_ctr"), ("script", "row_script")]
+    table = [f'| {t("metrics.col_metric")} | {t("metrics.col_full")} | {t("metrics.col_compact")} |', "|---|---|---|"]
+    for key, label in rows:
+        table.append(f'| {t(f"metrics.{label}")} | {MODEL_METRICS["full"][key]} | {MODEL_METRICS["compact"][key]} |')
+    st.markdown("\n".join(table))
+
+    st.caption(t("metrics.figures_note"))
+    f1, f2 = st.columns(2)
+    with f1:
         st.image(os.path.join(FIGURES_DIR, "pr_curve_optimal_threshold.png"), caption=t("metrics.pr_caption"))
-    with m2:
-        st.info(t("metrics.recall"))
+    with f2:
         st.image(os.path.join(FIGURES_DIR, "CatBoost Feature Importance.jpg"), caption=t("metrics.fi_caption"))

@@ -69,6 +69,7 @@ requirements-dev.txt
 *.md
 LICENSE
 docs/
+space/
 reports/metrics/
 *.pdf
 

@@ -93,8 +93,26 @@ STRINGS = {
 
     # --- metrics tab ---
     "metrics.header": "Model quality (trained on 2.1 M of 5.8 M rows)",
-    "metrics.auc": "ROC-AUC on the test set: **0.786**",
-    "metrics.recall": "Recall at threshold 0.37: **0.82** (precision 0.31)",
+    "metrics.loaded.compact": "Loaded model: **compact** (max_ctr_complexity=3, {size}) — the variant served by the public demo.",
+    "metrics.loaded.full": "Loaded model: **full** (the diploma reference model, {size}).",
+    "metrics.auc": "ROC-AUC on the test set: **{auc}**",
+    "metrics.recall": "Recall at threshold 0.37: **{recall}** (precision {precision})",
+    "metrics.variants_header": "Two model variants",
+    "metrics.variants_text": "Both models share the data, the split and every training parameter; the only difference "
+                             "is how deep CatBoost combines categorical features in its CTR tables "
+                             "(`max_ctr_complexity`: 4 vs 3). The compact one needs 2.7× less RAM and fits a free host, "
+                             "at a cost of 0.007 ROC-AUC. The full model remains the reference result of the diploma.",
+    "metrics.col_metric": "Metric",
+    "metrics.col_full": "Full model",
+    "metrics.col_compact": "Compact model",
+    "metrics.row_auc": "ROC-AUC",
+    "metrics.row_recall": "Recall @ 0.37",
+    "metrics.row_precision": "Precision @ 0.37",
+    "metrics.row_size": "Pipeline size (pkl)",
+    "metrics.row_ram": "RAM after loading",
+    "metrics.row_ctr": "CTR combinations (max_ctr_complexity)",
+    "metrics.row_script": "Training script",
+    "metrics.figures_note": "The figures below were produced for the full model during the diploma work.",
     "metrics.pr_caption": "Choosing the classification threshold (precision–recall)",
     "metrics.fi_caption": "Feature importance (CatBoost)",
 }

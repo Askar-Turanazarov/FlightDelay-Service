@@ -15,14 +15,14 @@ known at planning time: airline, origin and destination airports, date, departur
 scheduled flight time. On top of the forecast the app explains *why* (per-flight Shapley values) and
 translates the risk into an **expected financial loss** using FAA cost assumptions.
 
-**🚀 Live demo:** https://huggingface.co/spaces/AskarT/flight-delay-risk
-*(free CPU Space: it sleeps after 48 h without visitors, the first load takes about a minute while the model is downloaded)*
+**🚀 Live demo:** https://flight-delay-askar.streamlit.app · project page on [Hugging Face Spaces](https://huggingface.co/spaces/AskarT/flight-delay-risk)
+*(free Streamlit Community Cloud instance: it sleeps after 12 h without visitors, and the first load takes about a minute while the model is downloaded; it serves the [compact model](#two-model-variants))*
 
-![Prediction screen](docs/img/02_prediction.png)
+![Prediction screen](docs/img/en/01_prediction.png)
 
 | Explanation & economics | Model evidence |
 |:--:|:--:|
-| ![SHAP and loss breakdown](docs/img/03_shap_economics.png) | ![Model metrics tab](docs/img/04_model_evidence.png) |
+| ![SHAP and loss breakdown](docs/img/en/02_shap_economics.png) | ![Model metrics tab](docs/img/en/03_model_evidence.png) |
 
 ---
 
@@ -32,11 +32,12 @@ translates the risk into an **expected financial loss** using FAA cost assumptio
 2. [Data](#data)
 3. [Approach](#approach)
 4. [Results](#results)
-5. [Model artifacts](#model-artifacts)
-6. [Run it](#run-it)
-7. [Project structure](#project-structure)
-8. [Known limitations & roadmap](#known-limitations--roadmap)
-9. [Documentation & author](#documentation--author)
+5. [Two model variants](#two-model-variants)
+6. [Model artifacts](#model-artifacts)
+7. [Run it](#run-it)
+8. [Project structure](#project-structure)
+9. [Known limitations & roadmap](#known-limitations--roadmap)
+10. [Documentation & author](#documentation--author)
 
 ---
 
@@ -56,8 +57,8 @@ translates the risk into an **expected financial loss** using FAA cost assumptio
   reactionary delays across the network.
 * **Three UI languages** — English, Uzbek (Latin) and Russian. The app opens in the browser's
   language (`uz*` → Uzbek, `ru*` → Russian, anything else → English) and has a switcher in the sidebar.
-
-![Uzbek interface](docs/img/05_uzbek.png)
+  The Uzbek and Russian READMEs ([README.uz.md](README.uz.md), [README.ru.md](README.ru.md)) show the
+  interface in those languages.
 
 ## Data
 
@@ -114,6 +115,9 @@ negative) is more expensive for an airline than a false alarm, the threshold was
 ## Results
 
 Test set: 408 907 flights (20 % hold-out). Source of truth: [`reports/metrics/`](reports/metrics/).
+The numbers below are those of the **full model** (`train_final.py`), the reference result of the
+diploma; the compact variant served by the live demo is compared with it in the
+[next section](#two-model-variants).
 
 | Metric | Value |
 |---|---|
@@ -137,20 +141,67 @@ Threshold sweep (`reports/metrics/recall085_results.txt`):
 Earlier experiments (PCA, ensembles with LightGBM, 30/45-minute targets) are kept in
 `notebooks/archive/` and `reports/figures/`; the final model outperformed all of them on ROC-AUC.
 
+## Two model variants
+
+The full model is 433 MB on disk and about **1.5 GB in RAM** (2.8 GB peak while unpickling), because
+CatBoost stores counter (CTR) tables for combinations of up to four categorical features
+(`ROUTE` ≈ 4 200 values × `DAY` × `MONTH` × ...). That is fine on a laptop or a Docker host, but the
+free tier of Streamlit Community Cloud, where the public demo lives, gives 1 GB (2.7 GB hard limit),
+and the app was killed at start-up. Hugging Face Docker Spaces, the originally planned host, became a
+paid feature in 2026.
+
+Instead of shrinking the diploma model, a **second, compact variant was added**. Six configurations
+were trained on the same 2.1 M rows and the same split (all results in
+`reports/metrics/compact_experiments.txt`); limiting CTR combinations to three features
+(`max_ctr_complexity=3`) turned out to be the best trade-off:
+
+| | Full model | Compact model |
+|---|---|---|
+| Script | `src/train_final.py` | `src/train_compact.py` |
+| CatBoost settings | 2500 it., lr 0.03, depth 7, CTR combinations ≤ 4 (default) | identical, CTR combinations ≤ 3 |
+| ROC-AUC (test) | **0.786** | **0.779** |
+| Recall / precision @ 0.37 | 0.82 / 0.31 | 0.82 / 0.30 |
+| Pipeline on disk (`.pkl`) | 433 MB | 114 MB |
+| RAM after loading / peak | 1.5 GB / 2.8 GB | 0.6 GB / 0.9 GB |
+| Where it runs | local, Docker, `MODEL_VARIANT=full` | **live demo**, default everywhere |
+
+Both files are published in the same [Hugging Face repository](https://huggingface.co/AskarT/flight-delay-catboost).
+The other configurations tried (CTR combinations ≤ 2 → AUC 0.754–0.759 at 36–52 MB; ≤ 1 → AUC
+0.733–0.751 at 5–7 MB) lost too much quality: the high-order category combinations carry real signal.
+
+Individual predictions of the two variants differ slightly (for example JFK → LAX on 15 July at
+18:00: 0.375 full vs 0.469 compact), so the figures on a screenshot depend on which model produced it.
+
+<details>
+<summary>Screenshots of the full model (taken before the compact variant existed)</summary>
+
+> Same interface; the probabilities, SHAP contributions and expected loss on these images come from
+> the full 433 MB model and differ slightly from the live demo, which serves the compact model.
+
+![Prediction screen, full model](docs/img/02_prediction.png)
+
+| Explanation & economics | Model evidence |
+|:--:|:--:|
+| ![SHAP and loss breakdown, full model](docs/img/03_shap_economics.png) | ![Model metrics tab, full model](docs/img/04_model_evidence.png) |
+
+![Uzbek interface, full model](docs/img/05_uzbek.png)
+
+</details>
+
 ## Model artifacts
 
 | File | Size | Where | Used by the app |
 |---|---|---|---|
-| `model_pipeline_main.pkl` — full pipeline (feature engineer + CatBoost), joblib `compress=3` | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **yes** |
-| `catboost_model_main.cbm` — the same CatBoost model, native format | 1.29 GB | local only | no |
+| `model_pipeline_compact.pkl` — compact pipeline (feature engineer + CatBoost), joblib `compress=3` | 114 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **yes, by default** |
+| `model_pipeline_main.pkl` — full pipeline, same structure | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | with `MODEL_VARIANT=full` |
+| `catboost_model_compact.cbm`, `catboost_model_main.cbm` — the same CatBoost models, native format | 326 MB, 1.29 GB | local only | no |
 | `lookup_data.joblib` — routes, airports, airlines for the UI | 0.1 MB | this repo | yes |
 
-The model is large because CatBoost stores counter (CTR) tables for high-cardinality categorical
-features such as `ROUTE` (≈ 4 200 values) and `DAY`.
-
-**Loading logic** (`src/model_loader.py`): if `models/model_pipeline_main.pkl` exists locally it is
-used; otherwise the file is downloaded once from the Hub with `huggingface_hub` and cached.
-Override the source with environment variables `HF_MODEL_REPO` and `HF_MODEL_FILE`.
+**Loading logic** (`src/model_loader.py`): the variant is chosen by the `MODEL_VARIANT` environment
+variable (`compact` by default, `full` for the diploma model). If the corresponding pickle exists in
+`models/` it is used; otherwise the file is downloaded once from the Hub with `huggingface_hub` and
+cached. `HF_MODEL_REPO` and `HF_MODEL_FILE` override the source entirely. The "Model evidence" tab of
+the app shows which variant is loaded and the comparison table above.
 
 **Compatibility:** the pickle is bound to Python 3.10, catboost 1.2.8, scikit-learn 1.7.2,
 numpy 2.2.6, pandas 2.3.3 (all pinned in `requirements.txt`) and to the class in
@@ -172,8 +223,13 @@ streamlit run src/app.py
 On Windows you can simply double-click `START_PROJECT.bat`: it creates the venv, installs the
 requirements and starts the app on the first free port from 8505.
 
-The model is fetched from Hugging Face on the first start (433 MB). To use a local copy put it at
-`models/model_pipeline_main.pkl`.
+The compact model is fetched from Hugging Face on the first start (114 MB). To use a local copy put
+it at `models/model_pipeline_compact.pkl`. For the full diploma model (433 MB, about 1.5 GB RAM):
+
+```bash
+set MODEL_VARIANT=full          # Windows   |   export MODEL_VARIANT=full on Linux/macOS
+streamlit run src/app.py
+```
 
 ### Docker
 
@@ -188,20 +244,28 @@ Then open http://localhost:8501. Useful variants:
 # use a local model file instead of downloading it
 docker run -p 8501:8501 -v "$PWD/models:/app/models:ro" flt-delay-app
 
+# serve the full diploma model instead of the compact one (needs ~2 GB RAM for the container)
+docker run -p 8501:8501 -e MODEL_VARIANT=full flt-delay-app
+
 # a PyPI mirror if the default CDN is slow in your region
 docker build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple -t flt-delay-app .
 ```
 
-The image (python 3.10-slim, non-root user, health check on `/_stcore/health`) is the same one that
-runs in the Hugging Face Space. It is about 1.6 GB, almost all of it CatBoost, SciPy and pyarrow.
+The image (python 3.10-slim, non-root user, health check on `/_stcore/health`) runs on any Docker host,
+including Hugging Face Docker Spaces (a paid plan there since 2026). It is about 1.6 GB, almost all of it
+CatBoost, SciPy and pyarrow. The public demo runs on Streamlit Community Cloud straight from this repository.
 
 ### Retrain
 
 ```bash
 kaggle datasets download -d usdot/flight-delays -p data --unzip
 pip install -r requirements-dev.txt
-python src/train_final.py          # GPU by default; set task_type="CPU" in the script otherwise
+python src/train_final.py          # full model   -> models/model_pipeline_main.pkl    (GPU, ~11 min on an RTX 4050)
+python src/train_compact.py        # compact model-> models/model_pipeline_compact.pkl (GPU, ~7 min)
 ```
+
+Both scripts use the same loader, split and parameters; set `task_type="CPU"` inside them to train
+without a GPU (much slower). The compact script also writes `reports/metrics/compact_model_results.txt`.
 
 EDA and the training story live in `notebooks/01_EDA_and_Training.ipynb`.
 
@@ -214,22 +278,26 @@ flight_delay_service/
 │   ├── analytics.py           risk index, relative risk, SHAP explanations
 │   ├── feature_engineering.py FlightFeatureEngineer (part of the pickled pipeline)
 │   ├── model_loader.py        local file or Hugging Face Hub download
-│   ├── train_final.py         training script
+│   ├── train_final.py         training script, full model (diploma reference)
+│   ├── train_compact.py       training script, compact model (live demo)
 │   └── i18n/                  en.py, uz.py, ru.py + locale detection
 ├── data/                      airlines.csv, airports.csv (flights.csv is downloaded, not committed)
-├── models/                    lookup_data.joblib (+ model_pipeline_main.pkl, downloaded)
+├── models/                    lookup_data.joblib (+ model_pipeline_compact.pkl / _main.pkl, downloaded)
 ├── reports/figures/           PR curve, feature importance, confusion matrices
 ├── reports/metrics/           raw metric reports from training
 ├── notebooks/                 01_EDA_and_Training.ipynb, archive/ with experiments
-├── docs/                      Report.pdf, Tech_report.pdf (Russian), img/ screenshots
+├── docs/                      Report.pdf, Tech_report.pdf (Russian), img/{en,uz,ru}/ screenshots
+├── space/                     static Hugging Face Space page (embeds the live demo)
 ├── logos/                     airline logos for the UI
 ├── Dockerfile · requirements.txt · requirements-dev.txt · START_PROJECT.bat
 ```
 
 ## Known limitations & roadmap
 
-* **Model size.** 433 MB compressed / about 1.3 GB in RAM. A compact retrain
-  (`max_ctr_complexity=1`, `DAY` and `ROUTE` not as categories) is planned.
+* **Model size.** The full model needs about 1.5 GB of RAM, which is why the public demo serves the
+  compact variant (0.6 GB, −0.007 ROC-AUC, see [Two model variants](#two-model-variants)). Smaller
+  configurations lose noticeably more quality; a further reduction would need different features
+  rather than CatBoost settings.
 * **Risk index is not calibration.** The main number shown is the raw probability; the index bar is
   a visual transform. A proper `CalibratedClassifierCV` step is on the roadmap.
 * **2015 US data only.** Airports, airlines and traffic patterns are those of 2015; the app is a

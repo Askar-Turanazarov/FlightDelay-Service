@@ -16,14 +16,14 @@ sana, uchish soati, masofa va rejadagi parvoz vaqti. Bashorat ustiga ilova *nima
 natija chiqqanini tushuntiradi (har bir reys uchun Shepli qiymatlari) va xavfni FAA xarajat
 meʼyorlari asosida **kutilayotgan moliyaviy zararga** aylantiradi.
 
-**🚀 Jonli demo:** https://huggingface.co/spaces/AskarT/flight-delay-risk
-*(bepul CPU Space: 48 soat tashrifsiz qolsa uxlab qoladi; birinchi ochilishda model yuklab olinadi va bir daqiqacha vaqt ketadi)*
+**🚀 Jonli demo:** https://flight-delay-askar.streamlit.app · loyiha sahifasi [Hugging Face Spaces](https://huggingface.co/spaces/AskarT/flight-delay-risk) da
+*(bepul Streamlit Community Cloud: 12 soat tashrifsiz qolsa uxlab qoladi; birinchi ochilishda model yuklab olinadi va bir daqiqacha vaqt ketadi; demo [ixcham modelda](#modelning-ikki-varianti) ishlaydi)*
 
-![Bashorat ekrani](docs/img/02_prediction.png)
+![Bashorat ekrani](docs/img/uz/01_prediction.png)
 
 | Tushuntirish va iqtisodiyot | Model asoslari |
 |:--:|:--:|
-| ![SHAP va zarar tafsiloti](docs/img/03_shap_economics.png) | ![Model koʻrsatkichlari](docs/img/04_model_evidence.png) |
+| ![SHAP va zarar tafsiloti](docs/img/uz/02_shap_economics.png) | ![Model koʻrsatkichlari](docs/img/uz/03_model_evidence.png) |
 
 ---
 
@@ -33,11 +33,12 @@ meʼyorlari asosida **kutilayotgan moliyaviy zararga** aylantiradi.
 2. [Maʼlumotlar](#maʼlumotlar)
 3. [Yondashuv](#yondashuv)
 4. [Natijalar](#natijalar)
-5. [Model artefaktlari](#model-artefaktlari)
-6. [Ishga tushirish](#ishga-tushirish)
-7. [Loyiha tuzilmasi](#loyiha-tuzilmasi)
-8. [Cheklovlar va rejalar](#cheklovlar-va-rejalar)
-9. [Hujjatlar va muallif](#hujjatlar-va-muallif)
+5. [Modelning ikki varianti](#modelning-ikki-varianti)
+6. [Model artefaktlari](#model-artefaktlari)
+7. [Ishga tushirish](#ishga-tushirish)
+8. [Loyiha tuzilmasi](#loyiha-tuzilmasi)
+9. [Cheklovlar va rejalar](#cheklovlar-va-rejalar)
+10. [Hujjatlar va muallif](#hujjatlar-va-muallif)
 
 ---
 
@@ -59,8 +60,8 @@ meʼyorlari asosida **kutilayotgan moliyaviy zararga** aylantiradi.
   zanjirli kechikishlar uchun 2,2× koeffitsiyentdan iborat.
 * **Uchta interfeys tili** — ingliz, oʻzbek (lotin) va rus. Ilova brauzer tilida ochiladi
   (`uz*` → oʻzbekcha, `ru*` → ruscha, qolgan hollarda inglizcha), yon panelda til almashtirgich bor.
-
-![Oʻzbekcha interfeys](docs/img/05_uzbek.png)
+  Bu fayldagi skrinshotlar oʻzbekcha interfeysni koʻrsatadi; inglizcha va ruscha koʻrinishi uchun
+  [README.md](README.md) va [README.ru.md](README.ru.md) ga qarang.
 
 ## Maʼlumotlar
 
@@ -116,6 +117,8 @@ saralab chiqildi va **0.37** da qotirildi: toʻliqlik 0.82, aniqlik 0.31.
 ## Natijalar
 
 Test toʻplami: 408 907 reys (20 % ajratilgan qism). Manba: [`reports/metrics/`](reports/metrics/).
+Quyidagi raqamlar **toʻliq model** (`train_final.py`), yaʼni diplom ishining asosiy natijasiga tegishli;
+jonli demoda ishlaydigan ixcham variant u bilan [keyingi boʻlimda](#modelning-ikki-varianti) taqqoslangan.
 
 | Koʻrsatkich | Qiymat |
 |---|---|
@@ -139,20 +142,67 @@ Chegaralarni saralash (`reports/metrics/recall085_results.txt`):
 Oldingi tajribalar (PCA, LightGBM bilan ansambllar, 30/45 daqiqalik maqsadlar) `notebooks/archive/`
 va `reports/figures/` da saqlangan; yakuniy model ROC-AUC boʻyicha ularning barchasidan ustun chiqdi.
 
+## Modelning ikki varianti
+
+Toʻliq model diskda 433 MB, xotirada esa taxminan **1,5 GB** (pickle ochilayotganda choʻqqi 2,8 GB) joy
+oladi, chunki CatBoost toʻrttagacha kategoriyali omil kombinatsiyasi uchun hisoblagich (CTR) jadvallarini
+saqlaydi (`ROUTE` ≈ 4 200 qiymat × `DAY` × `MONTH` × ...). Noutbuk yoki Docker xosti uchun bu muammo emas,
+ammo ommaviy demo joylashgan Streamlit Community Cloud ning bepul tarifi 1 GB (qatʼiy chegara 2,7 GB)
+beradi va ilova ishga tushishdayoq toʻxtatilardi. Dastlab rejalashtirilgan Hugging Face Docker Spaces
+esa 2026-yildan pullik boʻldi.
+
+Diplom modelini kichraytirish oʻrniga **ikkinchi, ixcham variant qoʻshildi**. Oʻsha 2,1 mln qator va
+oʻsha boʻlinishda oltita konfiguratsiya oʻqitildi (barcha natijalar `reports/metrics/compact_experiments.txt`
+da); CTR kombinatsiyalarini uchta omil bilan cheklash (`max_ctr_complexity=3`) eng yaxshi murosa boʻlib chiqdi:
+
+| | Toʻliq model | Ixcham model |
+|---|---|---|
+| Skript | `src/train_final.py` | `src/train_compact.py` |
+| CatBoost sozlamalari | 2500 iter., lr 0.03, chuqurlik 7, CTR kombinatsiyalari ≤ 4 (sukut boʻyicha) | aynan shu, CTR kombinatsiyalari ≤ 3 |
+| ROC-AUC (test) | **0.786** | **0.779** |
+| Recall / precision @ 0.37 | 0.82 / 0.31 | 0.82 / 0.30 |
+| Diskdagi pipeline (`.pkl`) | 433 MB | 114 MB |
+| Yuklangandan keyingi RAM / choʻqqi | 1,5 GB / 2,8 GB | 0,6 GB / 0,9 GB |
+| Qayerda ishlaydi | lokal, Docker, `MODEL_VARIANT=full` | **jonli demo**, hamma joyda sukut boʻyicha |
+
+Ikkala fayl ham bitta [Hugging Face repozitoriysida](https://huggingface.co/AskarT/flight-delay-catboost) joylangan.
+Sinab koʻrilgan boshqa konfiguratsiyalar (CTR kombinatsiyalari ≤ 2 → AUC 0.754–0.759, 36–52 MB; ≤ 1 → AUC
+0.733–0.751, 5–7 MB) sifatni haddan tashqari yoʻqotdi: yuqori tartibli kategoriya kombinatsiyalari haqiqiy
+signal tashiydi.
+
+Ikki variantning alohida bashoratlari biroz farq qiladi (masalan, JFK → LAX, 15-iyul, 18:00: toʻliq 0,375,
+ixcham 0,469), shuning uchun skrinshotdagi raqamlar uni qaysi model bergan boʻlsa, oʻshanga bogʻliq.
+
+<details>
+<summary>Toʻliq model skrinshotlari (ixcham variant paydo boʻlishidan oldin olingan)</summary>
+
+> Interfeys oʻsha-oʻsha; bu rasmlardagi ehtimollar, SHAP hissalari va kutilayotgan zarar toʻliq 433 MB
+> modeldan olingan va ixcham modelda ishlaydigan jonli demodan biroz farq qiladi.
+
+![Bashorat ekrani, toʻliq model](docs/img/02_prediction.png)
+
+| Tushuntirish va iqtisodiyot | Model asoslari |
+|:--:|:--:|
+| ![SHAP va zarar tafsiloti, toʻliq model](docs/img/03_shap_economics.png) | ![Model koʻrsatkichlari, toʻliq model](docs/img/04_model_evidence.png) |
+
+![Oʻzbekcha interfeys, toʻliq model](docs/img/05_uzbek.png)
+
+</details>
+
 ## Model artefaktlari
 
 | Fayl | Hajmi | Qayerda | Ilova ishlatadi |
 |---|---|---|---|
-| `model_pipeline_main.pkl` — toʻliq pipeline (omillar transformeri + CatBoost), joblib `compress=3` | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **ha** |
-| `catboost_model_main.cbm` — oʻsha CatBoost modeli, tabiiy formatda | 1,29 GB | faqat lokal | yoʻq |
+| `model_pipeline_compact.pkl` — ixcham pipeline (omillar transformeri + CatBoost), joblib `compress=3` | 114 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **ha, sukut boʻyicha** |
+| `model_pipeline_main.pkl` — toʻliq pipeline, tuzilishi bir xil | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | `MODEL_VARIANT=full` bilan |
+| `catboost_model_compact.cbm`, `catboost_model_main.cbm` — oʻsha CatBoost modellari, tabiiy formatda | 326 MB, 1,29 GB | faqat lokal | yoʻq |
 | `lookup_data.joblib` — interfeys uchun yoʻnalishlar, aeroportlar, aviakompaniyalar | 0,1 MB | shu repozitoriy | ha |
 
-Model katta, chunki CatBoost `ROUTE` (≈ 4 200 qiymat) va `DAY` kabi koʻp qiymatli kategoriyali
-omillar uchun hisoblagich (CTR) jadvallarini saqlaydi.
-
-**Yuklash mantiqi** (`src/model_loader.py`): agar `models/model_pipeline_main.pkl` lokal mavjud
-boʻlsa, u ishlatiladi; aks holda fayl `huggingface_hub` orqali Hubdan bir marta yuklab olinadi va
-keshlanadi. Manbani `HF_MODEL_REPO` va `HF_MODEL_FILE` muhit oʻzgaruvchilari bilan oʻzgartirish mumkin.
+**Yuklash mantiqi** (`src/model_loader.py`): variant `MODEL_VARIANT` muhit oʻzgaruvchisi bilan tanlanadi
+(sukut boʻyicha `compact`, diplom modeli uchun `full`). Tegishli pickle `models/` da boʻlsa, u ishlatiladi;
+aks holda fayl `huggingface_hub` orqali Hubdan bir marta yuklab olinadi va keshlanadi. `HF_MODEL_REPO` va
+`HF_MODEL_FILE` manbani butunlay oʻzgartiradi. Ilovaning «Model asoslari» boʻlimida qaysi variant
+yuklangani va yuqoridagi taqqoslash jadvali koʻrsatiladi.
 
 **Moslik:** pickle fayli Python 3.10, catboost 1.2.8, scikit-learn 1.7.2, numpy 2.2.6,
 pandas 2.3.3 versiyalariga (barchasi `requirements.txt` da qotirilgan) va
@@ -174,8 +224,14 @@ streamlit run src/app.py
 Windowsda `START_PROJECT.bat` faylini ikki marta bosish kifoya: u venv yaratadi, kutubxonalarni
 oʻrnatadi va ilovani 8505 dan boshlab birinchi boʻsh portda ishga tushiradi.
 
-Model birinchi ishga tushirishda Hugging Facedan yuklab olinadi (433 MB). Lokal nusxadan foydalanish
-uchun uni `models/model_pipeline_main.pkl` manziliga joylashtiring.
+Ixcham model birinchi ishga tushirishda Hugging Facedan yuklab olinadi (114 MB). Lokal nusxadan
+foydalanish uchun uni `models/model_pipeline_compact.pkl` manziliga joylashtiring. Toʻliq diplom modeli
+uchun (433 MB, taxminan 1,5 GB RAM):
+
+```bash
+set MODEL_VARIANT=full          # Windows   |   Linux/macOS da: export MODEL_VARIANT=full
+streamlit run src/app.py
+```
 
 ### Docker
 
@@ -190,21 +246,29 @@ Soʻng http://localhost:8501 ni oching. Foydali variantlar:
 # yuklab olish oʻrniga lokal model faylidan foydalanish
 docker run -p 8501:8501 -v "$PWD/models:/app/models:ro" flt-delay-app
 
+# ixcham oʻrniga toʻliq diplom modelini ishlatish (konteynerga ~2 GB RAM kerak)
+docker run -p 8501:8501 -e MODEL_VARIANT=full flt-delay-app
+
 # agar sizning mintaqangizda standart PyPI CDN sekin boʻlsa — koʻzgu (mirror)
 docker build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple -t flt-delay-app .
 ```
 
-Obraz (python 3.10-slim, root boʻlmagan foydalanuvchi, `/_stcore/health` boʻyicha health check)
-Hugging Face Space da ishlaydigan obrazning aynan oʻzi. Hajmi taxminan 1,6 GB, deyarli hammasi
-CatBoost, SciPy va pyarrow.
+Obraz (python 3.10-slim, root boʻlmagan foydalanuvchi, `/_stcore/health` boʻyicha health check) istalgan
+Docker xostida, shu jumladan Hugging Face Docker Spaces da (2026-yildan pullik tarif) ishlaydi. Hajmi taxminan
+1,6 GB, deyarli hammasi CatBoost, SciPy va pyarrow. Ommaviy demo toʻgʻridan-toʻgʻri shu repozitoriydan
+Streamlit Community Cloud da ishlaydi.
 
 ### Qayta oʻqitish
 
 ```bash
 kaggle datasets download -d usdot/flight-delays -p data --unzip
 pip install -r requirements-dev.txt
-python src/train_final.py          # sukut boʻyicha GPU; aks holda skriptda task_type="CPU" qoʻying
+python src/train_final.py          # toʻliq model -> models/model_pipeline_main.pkl    (GPU, RTX 4050 da ~11 daq.)
+python src/train_compact.py        # ixcham model -> models/model_pipeline_compact.pkl (GPU, ~7 daq.)
 ```
+
+Ikkala skript ham bir xil yuklagich, boʻlinish va parametrlardan foydalanadi; GPU boʻlmasa, ularning ichida
+`task_type="CPU"` qoʻying (ancha sekin). Ixcham skript `reports/metrics/compact_model_results.txt` ni ham yozadi.
 
 EDA va oʻqitish jarayoni `notebooks/01_EDA_and_Training.ipynb` da bayon qilingan.
 
@@ -217,22 +281,26 @@ flight_delay_service/
 │   ├── analytics.py           xavf indeksi, nisbiy xavf, SHAP tushuntirishlari
 │   ├── feature_engineering.py FlightFeatureEngineer (pickle qilingan pipelinening qismi)
 │   ├── model_loader.py        lokal fayl yoki Hugging Face Hubdan yuklash
-│   ├── train_final.py         oʻqitish skripti
+│   ├── train_final.py         oʻqitish skripti, toʻliq model (diplom asosi)
+│   ├── train_compact.py       oʻqitish skripti, ixcham model (jonli demo)
 │   └── i18n/                  en.py, uz.py, ru.py + tilni aniqlash
 ├── data/                      airlines.csv, airports.csv (flights.csv yuklab olinadi, repoda yoʻq)
-├── models/                    lookup_data.joblib (+ yuklab olinadigan model_pipeline_main.pkl)
+├── models/                    lookup_data.joblib (+ yuklab olinadigan model_pipeline_compact.pkl / _main.pkl)
 ├── reports/figures/           PR egri chizigʻi, omillar ahamiyati, xatolar matritsalari
 ├── reports/metrics/           oʻqitishdan olingan xom koʻrsatkich hisobotlari
 ├── notebooks/                 01_EDA_and_Training.ipynb, archive/ — tajribalar
-├── docs/                      Report.pdf, Tech_report.pdf (rus tilida), img/ — skrinshotlar
+├── docs/                      Report.pdf, Tech_report.pdf (rus tilida), img/{en,uz,ru}/ — skrinshotlar
+├── space/                     Hugging Face Space uchun statik sahifa (jonli demoni ichiga oladi)
 ├── logos/                     interfeys uchun aviakompaniya logotiplari
 ├── Dockerfile · requirements.txt · requirements-dev.txt · START_PROJECT.bat
 ```
 
 ## Cheklovlar va rejalar
 
-* **Model hajmi.** Siqilgan holda 433 MB / xotirada taxminan 1,3 GB. Ixcham qayta oʻqitish
-  (`max_ctr_complexity=1`, `DAY` va `ROUTE` kategoriya sifatida emas) rejalashtirilgan.
+* **Model hajmi.** Toʻliq modelga taxminan 1,5 GB RAM kerak, shuning uchun ommaviy demo ixcham variantda
+  ishlaydi (0,6 GB, −0,007 ROC-AUC, qarang: [Modelning ikki varianti](#modelning-ikki-varianti)). Undan
+  kichik konfiguratsiyalar sifatni sezilarli yoʻqotadi; yanada kichraytirish uchun CatBoost sozlamalari emas,
+  boshqa omillar kerak boʻladi.
 * **Xavf indeksi kalibrlash emas.** Asosiy koʻrsatiladigan raqam — xom ehtimol; indeks shkalasi
   faqat vizual oʻzgartirish. Toʻlaqonli `CalibratedClassifierCV` bosqichi rejalarda.
 * **Faqat 2015-yil AQSH maʼlumotlari.** Aeroportlar, aviakompaniyalar va trafik 2015-yilga tegishli;

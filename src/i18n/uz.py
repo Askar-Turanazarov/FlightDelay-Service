@@ -94,8 +94,26 @@ STRINGS = {
 
     # --- koʻrsatkichlar boʻlimi ---
     "metrics.header": "Model sifati (5,8 mln qatordan 2,1 mln qatorda oʻqitilgan)",
-    "metrics.auc": "Test toʻplamidagi ROC-AUC: **0.786**",
-    "metrics.recall": "0.37 chegarada Recall (toʻliqlik): **0.82** (aniqlik 0.31)",
+    "metrics.loaded.compact": "Yuklangan model: **ixcham** (max_ctr_complexity=3, {size}) — ommaviy demo aynan shu variantda ishlaydi.",
+    "metrics.loaded.full": "Yuklangan model: **toʻliq** (diplom ishining asosiy modeli, {size}).",
+    "metrics.auc": "Test toʻplamidagi ROC-AUC: **{auc}**",
+    "metrics.recall": "0.37 chegarada Recall (toʻliqlik): **{recall}** (aniqlik {precision})",
+    "metrics.variants_header": "Modelning ikki varianti",
+    "metrics.variants_text": "Ikkala model ham bir xil maʼlumotlar, bir xil boʻlinish va bir xil parametrlarda oʻqitilgan; "
+                             "farq faqat CatBoost CTR-jadvallarida kategoriyalar qanchalik chuqur birlashtirilishida "
+                             "(`max_ctr_complexity`: 4 va 3). Ixcham variant xotirada 2,7 barobar kam joy oladi va bepul "
+                             "hostingga sigʻadi, buning evaziga ROC-AUC 0,007 ga past. Toʻliq model diplom ishining asosiy natijasi boʻlib qoladi.",
+    "metrics.col_metric": "Koʻrsatkich",
+    "metrics.col_full": "Toʻliq model",
+    "metrics.col_compact": "Ixcham model",
+    "metrics.row_auc": "ROC-AUC",
+    "metrics.row_recall": "Recall @ 0.37",
+    "metrics.row_precision": "Precision @ 0.37",
+    "metrics.row_size": "Pipeline hajmi (pkl)",
+    "metrics.row_ram": "Yuklangandan keyingi RAM",
+    "metrics.row_ctr": "CTR kombinatsiyalari (max_ctr_complexity)",
+    "metrics.row_script": "Oʻqitish skripti",
+    "metrics.figures_note": "Quyidagi grafiklar diplom ishi davomida toʻliq model uchun tuzilgan.",
     "metrics.pr_caption": "Tasniflash chegarasini tanlash (Precision–Recall)",
     "metrics.fi_caption": "Omillarning ahamiyati (CatBoost)",
 }

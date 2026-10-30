@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flight Delay Risk</title>
+<meta name="description" content="Probability that a US domestic flight arrives more than 15 minutes late, with SHAP drivers and FAA-based expected loss. CatBoost + Streamlit.">
+<style>
+  :root { color-scheme: dark; --bg:#0e1117; --panel:#161b26; --text:#e6e9ef; --muted:#9aa3b2; --accent:#ff4b4b; --line:#262d3a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1200px; margin:0 auto; padding:24px 16px 40px; }
+  header { display:flex; flex-wrap:wrap; align-items:baseline; gap:12px 20px; margin-bottom:8px; }
+  h1 { font-size:1.6rem; margin:0; }
+  .links a { color:var(--text); text-decoration:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; margin-right:8px; display:inline-block; margin-top:6px; }
+  .links a:hover { border-color:var(--accent); }
+  p.lead { color:var(--muted); margin:8px 0 16px; max-width:900px; }
+  .demo { background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .demo iframe { display:block; width:100%; height:min(1000px, 88vh); border:0; background:var(--bg); }
+  .bar { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:10px 14px; border-bottom:1px solid var(--line); color:var(--muted); font-size:.9rem; }
+  .bar a { color:var(--accent); text-decoration:none; }
+  footer { color:var(--muted); font-size:.85rem; margin-top:16px; }
+  footer code { background:var(--panel); padding:1px 6px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>✈️ Flight Delay Prediction &amp; Risk Analysis</h1>
+    <div class="links">
+      <a href="https://github.com/Askar-Turanazarov/FlightDelay-Service">Source on GitHub</a>
+      <a href="https://huggingface.co/AskarT/flight-delay-catboost">Model on Hugging Face</a>
+      <a href="https://flight-delay-askar.streamlit.app">Open demo full screen</a>
+    </div>
+  </header>
+  <p class="lead">
+    Probability that a US domestic flight arrives more than 15 minutes late (FAA definition), estimated from
+    information known at scheduling time only. CatBoost inside a scikit-learn pipeline, SHAP explanation of every
+    prediction and an FAA-based expected-loss estimate. Interface in English, Uzbek and Russian.
+    ROC-AUC 0.786 (full model) / 0.779 (compact model served here), recall 0.82 at the chosen threshold 0.37.
+  </p>
+  <div class="demo">
+    <div class="bar">
+      <span>Live demo hosted on Streamlit Community Cloud. If it is asleep, the first load takes about a minute while the 114 MB compact model is downloaded.</span>
+      <a href="https://flight-delay-askar.streamlit.app" target="_blank" rel="noopener">Having trouble? Open it directly ↗</a>
+    </div>
+    <iframe src="https://flight-delay-askar.streamlit.app?embed=true" title="Flight delay risk demo" loading="lazy" allow="clipboard-write"></iframe>
+  </div>
+  <footer>
+    Askar Turanazarov, Data Science diploma project, 2026. MIT license. Data: US DOT 2015 via Kaggle
+    <code>usdot/flight-delays</code>.
+  </footer>
+</div>
+</body>
+</html>

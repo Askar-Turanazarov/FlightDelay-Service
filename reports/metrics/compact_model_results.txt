@@ -1,0 +1,32 @@
+COMPACT MODEL REPORT (max_ctr_complexity=3)
+--------------------------------------------------
+TRAINING TIME: 6 min 50 sec
+TREES: 2500
+ROC-AUC SCORE: 0.7786
+PKL SIZE: 114.2 MB (joblib compress=3)
+CBM SIZE: 325.6 MB
+--------------------------------------------------
+CLASSIFICATION METRICS @ 0.50:
+              precision    recall  f1-score   support
+
+           0       0.90      0.76      0.82    331595
+           1       0.39      0.66      0.49     77312
+
+    accuracy                           0.74    408907
+   macro avg       0.65      0.71      0.65    408907
+weighted avg       0.81      0.74      0.76    408907
+
+--------------------------------------------------
+THRESHOLD SWEEP (same grid as recall085_results.txt):
+Threshold    | Recall     | Precision 
+--------------------------------------
+0.2          | 0.9696     | 0.2163    
+0.25         | 0.9369     | 0.2349    
+0.3          | 0.8970     | 0.2584    
+0.35         | 0.8438     | 0.2848    
+0.37         | 0.8216     | 0.2968    
+0.4          | 0.7853     | 0.3150    
+0.45         | 0.7229     | 0.3491    
+0.5          | 0.6571     | 0.3859    
+
+Reference (full model, train_final.py): ROC-AUC 0.7860, recall 0.8179 / precision 0.3058 @ 0.37.

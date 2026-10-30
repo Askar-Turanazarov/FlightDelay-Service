@@ -93,8 +93,26 @@ STRINGS = {
 
     # --- вкладка метрик ---
     "metrics.header": "Качество модели (обучено на 2,1 млн из 5,8 млн строк)",
-    "metrics.auc": "ROC-AUC на тестовой выборке: **0.786**",
-    "metrics.recall": "Recall (полнота) при пороге 0.37: **0.82** (точность 0.31)",
+    "metrics.loaded.compact": "Загруженная модель: **компактная** (max_ctr_complexity=3, {size}) — именно она работает в публичной демке.",
+    "metrics.loaded.full": "Загруженная модель: **полная** (эталонная модель диплома, {size}).",
+    "metrics.auc": "ROC-AUC на тестовой выборке: **{auc}**",
+    "metrics.recall": "Recall (полнота) при пороге 0.37: **{recall}** (точность {precision})",
+    "metrics.variants_header": "Два варианта модели",
+    "metrics.variants_text": "Обе модели обучены на одних данных, одном разбиении и с одними параметрами; разница только "
+                             "в глубине комбинаций категорий в CTR-таблицах CatBoost (`max_ctr_complexity`: 4 и 3). "
+                             "Компактная занимает в 2,7 раза меньше памяти и помещается на бесплатный хостинг ценой "
+                             "0,007 ROC-AUC. Полная модель остаётся эталонным результатом диплома.",
+    "metrics.col_metric": "Метрика",
+    "metrics.col_full": "Полная модель",
+    "metrics.col_compact": "Компактная модель",
+    "metrics.row_auc": "ROC-AUC",
+    "metrics.row_recall": "Recall @ 0.37",
+    "metrics.row_precision": "Precision @ 0.37",
+    "metrics.row_size": "Размер пайплайна (pkl)",
+    "metrics.row_ram": "RAM после загрузки",
+    "metrics.row_ctr": "Комбинации CTR (max_ctr_complexity)",
+    "metrics.row_script": "Скрипт обучения",
+    "metrics.figures_note": "Графики ниже построены для полной модели в ходе дипломной работы.",
     "metrics.pr_caption": "Выбор порога классификации (Precision–Recall)",
     "metrics.fi_caption": "Важность признаков (CatBoost)",
 }
