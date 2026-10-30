@@ -1,0 +1,11 @@
+# Streamlit configuration shared by local runs, Docker and Streamlit Community Cloud.
+# Secrets never go here: use .streamlit/secrets.toml (git-ignored) or the host's secret store.
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "dark"
