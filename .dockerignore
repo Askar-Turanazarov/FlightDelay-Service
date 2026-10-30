@@ -1,0 +1,79 @@
+# .dockerignore is a superset of .gitignore:
+# everything that stays out of git stays out of the image, plus files the
+# running app does not need. The image keeps: src/, data/airlines.csv,
+# data/airports.csv, models/lookup_data.joblib, logos/, reports/figures/,
+# requirements.txt. The model is downloaded from Hugging Face at first start.
+
+# ---------- Python / environment ----------
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------- IDE / editors ----------
+.idea/
+.vscode/
+*.swp
+
+# ---------- Jupyter / training artefacts ----------
+.ipynb_checkpoints/
+catboost_info/
+*.tfevents*
+notebooks/
+
+# ---------- Local working files ----------
+tasks/
+CLAUDE.md
+.claude/
+.scripts/
+_local/
+
+# ---------- Secrets & credentials ----------
+.env
+.env.*
+*.env
+secrets.toml
+.streamlit/secrets.toml
+kaggle.json
+*.pem
+*.key
+*.p12
+*.pfx
+.netrc
+.huggingface/
+*token*
+*credential*
+
+# ---------- Heavy data & models ----------
+data/flights.csv
+data/*.zip
+data/*.parquet
+models/*
+!models/.gitkeep
+!models/lookup_data.joblib
+
+# ---------- Not needed at runtime ----------
+.git/
+.gitignore
+.gitattributes
+.dockerignore
+.python-version
+Dockerfile
+START_PROJECT.bat
+requirements-dev.txt
+*.md
+LICENSE
+docs/
+reports/metrics/
+*.pdf
+
+# ---------- OS / misc ----------
+*.log
+Thumbs.db
+.DS_Store
+desktop.ini

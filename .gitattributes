@@ -1,0 +1,18 @@
+# Normalise line endings: LF in the repository, native on checkout
+* text=auto eol=lf
+
+# Windows-only script keeps CRLF
+*.bat text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.joblib binary
+*.pkl binary
+*.cbm binary
+
+# Notebooks: treat as text but do not show noisy diffs
+*.ipynb text -diff

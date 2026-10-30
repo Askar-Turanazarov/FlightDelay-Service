@@ -1,0 +1,58 @@
+# ---------- Python / environment ----------
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------- IDE / editors ----------
+.idea/
+.vscode/
+*.swp
+
+# ---------- Jupyter / training artefacts ----------
+.ipynb_checkpoints/
+catboost_info/
+*.tfevents*
+
+# ---------- Local working files (never published) ----------
+tasks/
+CLAUDE.md
+.claude/
+.scripts/
+_local/
+
+# ---------- Secrets & credentials ----------
+.env
+.env.*
+*.env
+secrets.toml
+.streamlit/secrets.toml
+kaggle.json
+*.pem
+*.key
+*.p12
+*.pfx
+.netrc
+.huggingface/
+*token*
+*credential*
+
+# ---------- Heavy data & models (hosted on Kaggle / Hugging Face) ----------
+data/flights.csv
+data/*.zip
+data/*.parquet
+models/*
+!models/.gitkeep
+!models/lookup_data.joblib
+!models/README.md
+
+# ---------- OS / misc ----------
+*.log
+Thumbs.db
+.DS_Store
+desktop.ini
