@@ -6,7 +6,7 @@
 [![CatBoost 1.2.8](https://img.shields.io/badge/CatBoost-1.2.8-FFCC00?logo=catboost&logoColor=black)](https://catboost.ai/)
 [![Streamlit 1.53](https://img.shields.io/badge/Streamlit-1.53-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
-[![Model on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Model-Hugging%20Face%20Hub-yellow)](https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost)
+[![Model on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Model-Hugging%20Face%20Hub-yellow)](https://huggingface.co/AskarT/flight-delay-catboost)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 AQSH ichki reysining **15 daqiqadan koʻproq kechikib qoʻnish** ehtimolini (FAA boʻyicha kechikish
@@ -16,7 +16,7 @@ sana, uchish soati, masofa va rejadagi parvoz vaqti. Bashorat ustiga ilova *nima
 natija chiqqanini tushuntiradi (har bir reys uchun Shepli qiymatlari) va xavfni FAA xarajat
 meʼyorlari asosida **kutilayotgan moliyaviy zararga** aylantiradi.
 
-**🚀 Jonli demo:** https://huggingface.co/spaces/YOUR_HF_LOGIN/flight-delay-risk
+**🚀 Jonli demo:** https://huggingface.co/spaces/AskarT/flight-delay-risk
 *(bepul CPU Space: 48 soat tashrifsiz qolsa uxlab qoladi; birinchi ochilishda model yuklab olinadi va bir daqiqacha vaqt ketadi)*
 
 ![Bashorat ekrani](docs/img/02_prediction.png)
@@ -143,7 +143,7 @@ va `reports/figures/` da saqlangan; yakuniy model ROC-AUC boʻyicha ularning bar
 
 | Fayl | Hajmi | Qayerda | Ilova ishlatadi |
 |---|---|---|---|
-| `model_pipeline_main.pkl` — toʻliq pipeline (omillar transformeri + CatBoost), joblib `compress=3` | 433 MB | [Hugging Face Hub](https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost) | **ha** |
+| `model_pipeline_main.pkl` — toʻliq pipeline (omillar transformeri + CatBoost), joblib `compress=3` | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **ha** |
 | `catboost_model_main.cbm` — oʻsha CatBoost modeli, tabiiy formatda | 1,29 GB | faqat lokal | yoʻq |
 | `lookup_data.joblib` — interfeys uchun yoʻnalishlar, aeroportlar, aviakompaniyalar | 0,1 MB | shu repozitoriy | ha |
 
@@ -163,8 +163,8 @@ pandas 2.3.3 versiyalariga (barchasi `requirements.txt` da qotirilgan) va
 ### Lokal (Python 3.10)
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_LOGIN/flight-delay-service.git
-cd flight-delay-service
+git clone https://github.com/Askar-Turanazarov/FlightDelay-Service.git
+cd FlightDelay-Service
 python -m venv venv
 venv\Scripts\activate            # Windows   |   Linux/macOS da: source venv/bin/activate
 pip install -r requirements.txt
@@ -244,6 +244,6 @@ flight_delay_service/
 ## Hujjatlar va muallif
 
 * `docs/Report.pdf` — diplom ishi hisoboti, `docs/Tech_report.pdf` — texnik hisobot (ikkalasi rus tilida).
-* Model kartasi: https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost
+* Model kartasi: https://huggingface.co/AskarT/flight-delay-catboost
 
 **Askar Turanazarov** — Data Science boʻyicha diplom loyihasi, 2026. [MIT litsenziyasi](LICENSE) ostida tarqatiladi.

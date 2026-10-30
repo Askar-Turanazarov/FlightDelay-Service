@@ -6,7 +6,7 @@
 [![CatBoost 1.2.8](https://img.shields.io/badge/CatBoost-1.2.8-FFCC00?logo=catboost&logoColor=black)](https://catboost.ai/)
 [![Streamlit 1.53](https://img.shields.io/badge/Streamlit-1.53-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
-[![Model on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Model-Hugging%20Face%20Hub-yellow)](https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost)
+[![Model on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Model-Hugging%20Face%20Hub-yellow)](https://huggingface.co/AskarT/flight-delay-catboost)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Полный ML-сервис, который оценивает вероятность того, что внутренний рейс по США прилетит
@@ -16,7 +16,7 @@
 результат (значения Шепли для конкретного рейса), и переводит риск в **ожидаемый финансовый ущерб**
 по стоимостным нормативам FAA.
 
-**🚀 Живая демонстрация:** https://huggingface.co/spaces/YOUR_HF_LOGIN/flight-delay-risk
+**🚀 Живая демонстрация:** https://huggingface.co/spaces/AskarT/flight-delay-risk
 *(бесплатный CPU Space: засыпает после 48 часов без посетителей, первое открытие занимает около минуты, пока скачивается модель)*
 
 ![Экран прогноза](docs/img/02_prediction.png)
@@ -143,7 +143,7 @@ DESTINATION_AIRPORT, ROUTE, IS_WEEKEND, IS_NIGHT`. Время обучения: 
 
 | Файл | Размер | Где | Нужен приложению |
 |---|---|---|---|
-| `model_pipeline_main.pkl` — полный пайплайн (трансформер признаков + CatBoost), joblib `compress=3` | 433 МБ | [Hugging Face Hub](https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost) | **да** |
+| `model_pipeline_main.pkl` — полный пайплайн (трансформер признаков + CatBoost), joblib `compress=3` | 433 МБ | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **да** |
 | `catboost_model_main.cbm` — та же модель CatBoost в родном формате | 1,29 ГБ | только локально | нет |
 | `lookup_data.joblib` — маршруты, аэропорты, авиакомпании для интерфейса | 0,1 МБ | этот репозиторий | да |
 
@@ -163,8 +163,8 @@ numpy 2.2.6, pandas 2.3.3 (всё закреплено в `requirements.txt`) и
 ### Локально (Python 3.10)
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_LOGIN/flight-delay-service.git
-cd flight-delay-service
+git clone https://github.com/Askar-Turanazarov/FlightDelay-Service.git
+cd FlightDelay-Service
 python -m venv venv
 venv\Scripts\activate            # Windows   |   на Linux/macOS: source venv/bin/activate
 pip install -r requirements.txt
@@ -244,6 +244,6 @@ flight_delay_service/
 ## Документация и автор
 
 * `docs/Report.pdf` — дипломный отчёт, `docs/Tech_report.pdf` — технический отчёт (оба на русском).
-* Карточка модели: https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost
+* Карточка модели: https://huggingface.co/AskarT/flight-delay-catboost
 
 **Аскар Тураназаров (Askar Turanazarov)** — дипломный проект по Data Science, 2026. Распространяется под [лицензией MIT](LICENSE).

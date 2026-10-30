@@ -6,7 +6,7 @@
 [![CatBoost 1.2.8](https://img.shields.io/badge/CatBoost-1.2.8-FFCC00?logo=catboost&logoColor=black)](https://catboost.ai/)
 [![Streamlit 1.53](https://img.shields.io/badge/Streamlit-1.53-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
-[![Model on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Model-Hugging%20Face%20Hub-yellow)](https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost)
+[![Model on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Model-Hugging%20Face%20Hub-yellow)](https://huggingface.co/AskarT/flight-delay-catboost)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 An end-to-end machine-learning service that estimates the probability that a US domestic flight
@@ -15,7 +15,7 @@ known at planning time: airline, origin and destination airports, date, departur
 scheduled flight time. On top of the forecast the app explains *why* (per-flight Shapley values) and
 translates the risk into an **expected financial loss** using FAA cost assumptions.
 
-**🚀 Live demo:** https://huggingface.co/spaces/YOUR_HF_LOGIN/flight-delay-risk
+**🚀 Live demo:** https://huggingface.co/spaces/AskarT/flight-delay-risk
 *(free CPU Space: it sleeps after 48 h without visitors, the first load takes about a minute while the model is downloaded)*
 
 ![Prediction screen](docs/img/02_prediction.png)
@@ -141,7 +141,7 @@ Earlier experiments (PCA, ensembles with LightGBM, 30/45-minute targets) are kep
 
 | File | Size | Where | Used by the app |
 |---|---|---|---|
-| `model_pipeline_main.pkl` — full pipeline (feature engineer + CatBoost), joblib `compress=3` | 433 MB | [Hugging Face Hub](https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost) | **yes** |
+| `model_pipeline_main.pkl` — full pipeline (feature engineer + CatBoost), joblib `compress=3` | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **yes** |
 | `catboost_model_main.cbm` — the same CatBoost model, native format | 1.29 GB | local only | no |
 | `lookup_data.joblib` — routes, airports, airlines for the UI | 0.1 MB | this repo | yes |
 
@@ -161,8 +161,8 @@ numpy 2.2.6, pandas 2.3.3 (all pinned in `requirements.txt`) and to the class in
 ### Local (Python 3.10)
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_LOGIN/flight-delay-service.git
-cd flight-delay-service
+git clone https://github.com/Askar-Turanazarov/FlightDelay-Service.git
+cd FlightDelay-Service
 python -m venv venv
 venv\Scripts\activate            # Windows   |   source venv/bin/activate on Linux/macOS
 pip install -r requirements.txt
@@ -241,6 +241,6 @@ flight_delay_service/
 ## Documentation & author
 
 * `docs/Report.pdf` — diploma report, `docs/Tech_report.pdf` — technical report (both in Russian).
-* Model card: https://huggingface.co/YOUR_HF_LOGIN/flight-delay-catboost
+* Model card: https://huggingface.co/AskarT/flight-delay-catboost
 
 **Askar Turanazarov** — Data Science diploma project, 2026. Released under the [MIT License](LICENSE).

@@ -14,7 +14,7 @@ MODEL_FILENAME = "model_pipeline_main.pkl"
 LOCAL_MODEL_PATH = BASE_DIR / "models" / MODEL_FILENAME
 
 # Override with environment variables when the model lives in another repo/file.
-DEFAULT_HF_REPO = "YOUR_HF_LOGIN/flight-delay-catboost"
+DEFAULT_HF_REPO = "AskarT/flight-delay-catboost"
 ENV_REPO = "HF_MODEL_REPO"
 ENV_FILE = "HF_MODEL_FILE"
 
