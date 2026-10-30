@@ -15,10 +15,10 @@ import plotly.express as px
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.analytics import FlightAnalytics
+from src.model_loader import resolve_model_path
 
 # --- ПУТИ ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(BASE_DIR, 'models', 'model_pipeline_main.pkl')
 LOOKUP_PATH = os.path.join(BASE_DIR, 'models', 'lookup_data.joblib')
 
 if BASE_DIR not in sys.path:
@@ -68,9 +68,10 @@ def get_risk_level(prob):
 
 
 # --- ЗАГРУЗКА РЕСУРСОВ ---
-@st.cache_resource
+@st.cache_resource(show_spinner="Загрузка модели (при первом запуске скачивается с Hugging Face)...")
 def load_all():
-    model = joblib.load(MODEL_PATH)
+    # Локальный models/model_pipeline_main.pkl, иначе скачивание с Hugging Face Hub (см. src/model_loader.py)
+    model = joblib.load(resolve_model_path())
     data = joblib.load(LOOKUP_PATH)
     try:
         air_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'airports.csv'))
