@@ -1,114 +1,97 @@
-# Askar Turanazarov / 1542 /
+# Askar Turanazarov
 
 # src/analytics.py
-# Файл для глубокого анализа результатов предсказания модели CatBoost. Используется логика:
-# Z-Scaling (Индекс риска), Калибровка (через Sigmoid Stretching) и Local SHAP (для конкретного рейса)
+# Post-processing of CatBoost predictions for the UI:
+#   * risk_index     - non-linear stretch of the raw probability for the visual gauge. It is a
+#                      display transform, NOT a probability calibration: decisions and money are
+#                      always computed from the raw model probability.
+#   * relative_risk  - raw probability compared with the dataset base rate (18.9 % of flights in
+#                      the 2015 data arrived more than 15 minutes late).
+#   * get_local_shap - per-flight SHAP contributions via CatBoost's built-in ShapValues.
 
 import numpy as np
 import pandas as pd
 import catboost as cb
-import plotly.express as px
+
+BASE_DELAY_RATE = 0.189      # share of delayed flights in the training data
+DECISION_THRESHOLD = 0.37    # chosen on the precision-recall curve for Recall ~ 0.82
 
 
 class FlightAnalytics:
-    def __init__(self, model, global_mean=0.189, global_std=0.12):
-        """
-        Класс FlightAnalytics используется для глубокого анализа результатов
-        предсказания модели CatBoost
-        """
-        # global_mean: средняя вероятность задержки по датасету (18.9%)
-        # global_std: примерное стандартное отклонение (можно взять 0.12)
+    """Helpers that turn a fitted pipeline (FlightFeatureEngineer + CatBoost) into UI-ready numbers."""
+
+    def __init__(self, model, base_rate=BASE_DELAY_RATE, threshold=DECISION_THRESHOLD):
         self.model = model
-        self.avg = global_mean
-        self.std = global_std
+        self.base_rate = base_rate
+        self.threshold = threshold
 
-    def calibrate_probability(self, prob):
+    # ---------- probability-derived numbers ----------
+
+    def is_delay_predicted(self, prob: float) -> bool:
+        """Binary verdict at the tuned threshold (Recall-oriented)."""
+        return prob >= self.threshold
+
+    def risk_index(self, prob: float, contrast: float = 1.8) -> float:
         """
-        Растягивает вероятность для лучшей визуализации (Sigmoid Stretching).
-        Помогает уйти от узкого диапазона 40-60%.
+        Visual risk index in [0, 1] for the gauge / progress bar.
+
+        A sigmoid applied to the scaled logit, centred on the decision threshold: the middle of
+        the bar (0.5) corresponds exactly to `threshold`, and the typical 0.1-0.5 range of model
+        outputs is spread over the whole bar so differences between flights are easier to see.
+        Monotonic in `prob`, so ordering is preserved. It is not a calibrated probability.
         """
-        # Превращаем вероятность в логит (score)
-        # Добавляем epsilon чтобы избежать деления на ноль
         eps = 1e-5
-        logit = np.log((prob + eps) / (1 - prob + eps))
 
-        # Сдвигаем центр и увеличиваем контрастность (коэффициент 1.5-2.0)
-        # Это настройка чувствительности интерфейса
-        calibrated = 1 / (1 + np.exp(-1.8 * (logit - 0.5)))
-        return calibrated
+        def logit(p):
+            return np.log((p + eps) / (1 - p + eps))
 
-    def get_risk_interpretation(self, prob):
+        return float(1 / (1 + np.exp(-contrast * (logit(prob) - logit(self.threshold)))))
+
+    def relative_risk(self, prob: float):
         """
-        Рассчитывает Индекс риска (Z-score) и текстовое пояснение.
-        """
-        z_score = (prob - self.avg) / self.std
+        Compare the raw probability with the dataset base rate.
 
-        if z_score <= -0.5:
-            text = "Намного надежнее среднего"
-            color = "green"
-        elif z_score <= 0.5:
-            text = "В рамках нормы для данного типа рейсов"
-            color = "gray"
+        Returns (ratio, status) where ratio = prob / base_rate and status is one of
+        'lower' (< 0.8x), 'typical' (0.8x-1.25x) or 'higher' (> 1.25x).
+        """
+        ratio = prob / self.base_rate
+        if ratio < 0.8:
+            status = "lower"
+        elif ratio <= 1.25:
+            status = "typical"
         else:
-            diff_pct = (prob / self.avg - 1) * 100
-            text = f"Риск выше среднего на {diff_pct:.0f}%"
-            color = "red"
+            status = "higher"
+        return ratio, status
 
-        return text, color, z_score
+    # ---------- explainability ----------
 
-    def get_local_shap(self, input_df):
+    def get_local_shap(self, input_df: pd.DataFrame, top_n: int = 7) -> pd.DataFrame:
         """
-        Считает вклад каждой фичи (признака) в конкретный прогноз.
-        Использует быстрый встроенный метод CatBoost - .get_feature_importance()
+        SHAP contributions of each feature to one prediction, using CatBoost's fast built-in
+        get_feature_importance(type='ShapValues'). Returns the `top_n` features by absolute
+        contribution with technical columns: 'feature', 'contribution', 'abs_contribution'.
         """
-        # Получаем SHAP-значения для одной строки
-        # Проверяем, является ли модель пайплайном
-        if hasattr(self.model, 'named_steps'):
-            actual_model = self.model.named_steps['clf']  # Имя модели из пайплайна
-            transformer = self.model.named_steps['feature_eng']  # Твой трансформер
-
-            # Прогоняем через feature_eng (обработка 2.1 млн строк и генерация 7 новых фичей)
-            processed_data = transformer.transform(input_df)
-
-            # Если после трансформации это numpy array, превращаем обратно в DataFrame для удобства
-            if isinstance(processed_data, np.ndarray):
-                processed_data = pd.DataFrame(processed_data, columns=transformer.get_feature_names_out())
+        if hasattr(self.model, "named_steps"):
+            actual_model = self.model.named_steps["clf"]
+            transformer = self.model.named_steps["feature_eng"]
+            processed = transformer.transform(input_df)
+            if isinstance(processed, np.ndarray):
+                processed = pd.DataFrame(processed, columns=transformer.get_feature_names_out())
         else:
             actual_model = self.model
-            processed_data = input_df
+            processed = input_df
 
-            # 2. Самый важный момент: получаем индексы или имена категориальных признаков
-            # CatBoost хранит их в самой модели
+        # CatBoost keeps the categorical feature indices inside the model; an explicit Pool
+        # avoids "Cannot convert 'AS' to float" on string categories.
         cat_features = actual_model.get_cat_feature_indices()
+        pool = cb.Pool(data=processed, cat_features=cat_features)
 
-        # 3. Создаем Pool, явно указывая категориальные признаки
-        # Это устраняет ошибку "Cannot convert 'AS' to float"
-        pool_data = cb.Pool(data=processed_data, cat_features=cat_features)
+        shap_values = actual_model.get_feature_importance(data=pool, type="ShapValues")[0]
+        contributions = shap_values[:-1]  # last element is the expected value (bias)
 
-        # 4. Вычисляем SHAP-значения (вклады фичей)
-        shap_values = actual_model.get_feature_importance(
-            data=pool_data,
-            type='ShapValues'
-        )[0]
-
-        feature_contributions = shap_values[:-1]
-        feature_names = processed_data.columns
-
-        # 5. Формируем результат для визуализации
         shap_df = pd.DataFrame({
-            'Признак': feature_names,
-            'Вклад': feature_contributions
+            "feature": [str(c).split("__")[-1] for c in processed.columns],
+            "contribution": contributions,
         })
-
-        # Маппинг имен для красоты (сокращаем технические префиксы после трансформера)
-        shap_df['Признак'] = shap_df['Признак'].apply(lambda x: x.split('__')[-1])
-
-        shap_df['Abs_Вклад'] = shap_df['Вклад'].abs()
-        shap_df = shap_df.sort_values('Abs_Вклад', ascending=False).head(7)
-
-        return shap_df
-
-
-
-
-
+        shap_df["abs_contribution"] = shap_df["contribution"].abs()
+        return shap_df.sort_values("abs_contribution", ascending=False).head(top_n).reset_index(drop=True)

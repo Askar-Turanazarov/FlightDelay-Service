@@ -10,6 +10,8 @@ import pandas as pd
 import joblib
 import os
 import sys
+import calendar
+from datetime import date
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -61,9 +63,10 @@ def calculate_economic_impact(prob, distance_miles):
 
 
 def get_risk_level(prob):
+    # Пороги по сырой вероятности модели: базовая доля задержек 18.9%, порог решения 0.37
     if prob < 0.2: return "🔵 Низкий", "green"
-    if prob < 0.4: return "🟡 Умеренный", "orange"
-    if prob < 0.6: return "🟠 Высокий", "red"
+    if prob < 0.37: return "🟡 Умеренный", "orange"
+    if prob < 0.55: return "🟠 Высокий", "red"
     return "🔴 Критический", "darkred"
 
 
@@ -86,9 +89,8 @@ def load_all():
 
 model, data, air_info, line_names = load_all()
 
-# Создаем объект для расчетов - постобработка результатов вероятностей
-# Используем 0.44 как среднее, так как модель сейчас выдает примерно столько
-analytics = FlightAnalytics(model, global_mean=0.44, global_std=0.12)
+# Постобработка предсказаний: индекс риска для шкалы, сравнение с базовой долей задержек, SHAP
+analytics = FlightAnalytics(model)
 
 # --- ИНТЕРФЕЙС (SIDEBAR) ---
 st.title("📊 Аналитическая система прогнозирования авиарисков - риск задержки авиарейса.")
@@ -106,7 +108,8 @@ with st.sidebar:
 
     st.divider()
     month = st.slider("Месяц", 1, 12, 3)
-    day = st.slider("День", 1, 31, 15)
+    days_in_month = calendar.monthrange(2015, month)[1]      # данные за 2015 год
+    day = st.slider("День", 1, days_in_month, min(15, days_in_month))
     dep_hour = st.slider("Час вылета", 0, 23, 12)
 
 # --- ГЛАВНЫЙ ЭКРАН ---
@@ -190,36 +193,51 @@ with tab1:
 
     with col_res:
         if st.button("ПРОВЕСТИ АНАЛИЗ РИСКОВ", type="primary", use_container_width=True):
-            # 1. Формируем входные данные
+            # 1. Формируем входные данные: день недели из даты (2015), прилёт из планового времени полёта
+            flight_date = date(2015, month, day)
+            day_of_week = flight_date.isoweekday()                   # 1 = понедельник ... 7 = воскресенье
+            sched_time = int(route['SCHEDULED_TIME'])
+            arr_minutes = (dep_hour * 60 + sched_time) % (24 * 60)
             input_df = pd.DataFrame([{
-                'MONTH': month, 'DAY': day, 'DAY_OF_WEEK': 1, 'AIRLINE': airline_code,
+                'MONTH': month, 'DAY': day, 'DAY_OF_WEEK': day_of_week, 'AIRLINE': airline_code,
                 'ORIGIN_AIRPORT': origin_code, 'DESTINATION_AIRPORT': dest_code,
                 'SCHEDULED_DEPARTURE': dep_hour * 100, 'DISTANCE': route['DISTANCE'],
-                'SCHEDULED_TIME': route['SCHEDULED_TIME'], 'SCHEDULED_ARRIVAL': (dep_hour + 2) * 100,
-                'DEP_HOUR': dep_hour, 'ARR_HOUR': (dep_hour + 2) % 24, 'IS_WEEKEND': 0
+                'SCHEDULED_TIME': route['SCHEDULED_TIME'],
+                'SCHEDULED_ARRIVAL': (arr_minutes // 60) * 100 + arr_minutes % 60,
+                'DEP_HOUR': dep_hour, 'ARR_HOUR': arr_minutes // 60,
+                'IS_WEEKEND': int(day_of_week in (6, 7))
             }])
 
-            # 2. Получаем сырую вероятность от CatBoost
-            raw_prob = model.predict_proba(input_df)[0][1]
+            # 2. Сырая вероятность задержки от CatBoost — главная величина, от неё считаются вердикт и экономика
+            prob = float(model.predict_proba(input_df)[0][1])
+            delay_predicted = analytics.is_delay_predicted(prob)
 
-            # 3. Применяем калибровку, чтобы расширить диапазон
-            prob = analytics.calibrate_probability(raw_prob)
+            # 3. Индекс риска — только для визуальной шкалы (растяжение, не калибровка)
+            risk_idx = analytics.risk_index(prob)
 
-            # 4. Получаем интерпретацию через Z-score (сравнение со средним)
-            risk_text, risk_color, z_val = analytics.get_risk_interpretation(prob)
+            # 4. Сравнение с базовой долей задержек в данных (18.9%)
+            ratio, rel_status = analytics.relative_risk(prob)
+            rel_text = {"lower": "ниже средней доли задержек",
+                        "typical": "на уровне средней доли задержек",
+                        "higher": "выше средней доли задержек"}[rel_status]
 
-            # 5. Считаем экономику (уже на основе откалиброванной вероятности)
+            # 5. Экономика — от сырой вероятности
             impact = calculate_economic_impact(prob, route['DISTANCE'])
 
             # --- ВИЗУАЛИЗАЦИЯ РЕЗУЛЬТАТОВ ---
             risk_label, color = get_risk_level(prob)
             st.markdown(f"### Уровень риска: <span style='color:{color}'>{risk_label}</span>", unsafe_allow_html=True)
-            st.progress(prob)
+            st.progress(risk_idx, text=f"Индекс риска (шкала): {risk_idx:.0%}")
 
-            # Выводим вероятность и Z-интерпретацию
             col_p1, col_p2 = st.columns(2)
-            col_p1.metric("Вероятность задержки", f"{prob:.1%}")
-            col_p2.metric("Относительно нормы", f"{z_val:+.1f} σ", help=risk_text)
+            col_p1.metric("Вероятность задержки", f"{prob:.1%}",
+                          help=f"Сырая вероятность модели. Порог решения {analytics.threshold:.2f}.")
+            col_p2.metric("Относительно средней (18.9%)", f"{ratio:.1f}×", help=rel_text)
+
+            if delay_predicted:
+                st.error(f"Вердикт модели: задержка вероятна (вероятность ≥ {analytics.threshold:.2f}).")
+            else:
+                st.success(f"Вердикт модели: задержка маловероятна (вероятность < {analytics.threshold:.2f}).")
 
             st.warning(f"Финансовый риск (Risk Value): **${impact['expected']:,.0f}**")
 
@@ -244,11 +262,8 @@ with tab1:
                 'SCHEDULED_DEPARTURE': 'Вылет (по расп.)'
             }
 
-            # Очистка имен признаков и перевод
-            # Убираем префиксы типа 'remainder__' или 'feature_eng__'
-            shap_data['Признак'] = shap_data['Признак'].str.split('__').str[-1]
-
-            # Маппим русские названия. Если слова в словаре нет — остаётся оригинал
+            # Технические колонки -> подписи для UI; русские названия признаков, иначе оригинал
+            shap_data = shap_data.rename(columns={'feature': 'Признак', 'contribution': 'Вклад'})
             shap_data['Признак'] = shap_data['Признак'].map(names_map).fillna(shap_data['Признак'])
 
             # Далее работа блока краткого SHAP-анализа
