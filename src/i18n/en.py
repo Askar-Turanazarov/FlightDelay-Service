@@ -2,7 +2,7 @@
 
 STRINGS = {
     # --- page & sidebar ---
-    "app.title": "📊 Flight delay risk analytics",
+    "app.title": "📊 Flight Delay Risk Analytics System",
     "sidebar.header": "📝 Flight parameters",
     "sidebar.language": "Language",
     "sidebar.airline": "Airline",
@@ -12,6 +12,7 @@ STRINGS = {
     "sidebar.day": "Day",
     "sidebar.dep_hour": "Departure hour",
     "sidebar.unknown": "Unknown",
+    "footer.portfolio": "Portfolio",
     "model.loading": "Loading the model (downloaded from Hugging Face on the first start)...",
 
     # --- tabs ---

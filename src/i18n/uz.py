@@ -13,6 +13,7 @@ STRINGS = {
     "sidebar.day": "Kun",
     "sidebar.dep_hour": "Uchish soati",
     "sidebar.unknown": "Nomaʼlum",
+    "footer.portfolio": "Portfolio",
     "model.loading": "Model yuklanmoqda (birinchi ishga tushirishda Hugging Face’dan yuklab olinadi)...",
 
     # --- boʻlimlar ---

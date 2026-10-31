@@ -12,6 +12,7 @@ STRINGS = {
     "sidebar.day": "День",
     "sidebar.dep_hour": "Час вылета",
     "sidebar.unknown": "Неизвестно",
+    "footer.portfolio": "Портфолио",
     "model.loading": "Загрузка модели (при первом запуске скачивается с Hugging Face)...",
 
     # --- вкладки ---

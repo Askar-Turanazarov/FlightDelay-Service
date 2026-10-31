@@ -7,6 +7,7 @@
 
 import os
 import sys
+import base64
 import calendar
 from datetime import date
 
@@ -38,7 +39,48 @@ MODEL_METRICS = {
     "compact": dict(auc="0.779", recall="0.82", precision="0.30", size="114 MB", ram="0.6 GB", ctr="3", script="train_compact.py"),
 }
 
-st.set_page_config(page_title="Flight Risk Analytics", page_icon="✈️", layout="wide")
+AUTHOR = "Askar Turanazarov"
+GITHUB_URL = "https://github.com/Askar-Turanazarov/FlightDelay-Service"
+HF_URL = "https://huggingface.co/AskarT/flight-delay-catboost"
+PORTFOLIO_URL = os.getenv("PORTFOLIO_URL", "")  # shown in the sidebar footer once the portfolio site is live
+
+st.set_page_config(
+    page_title="Flight Delay Risk Analytics System", page_icon="✈️", layout="wide",
+    menu_items={
+        "Get help": GITHUB_URL,
+        "Report a bug": GITHUB_URL + "/issues",
+        "About": (
+            "**Flight Delay Risk Analytics System**  \n"
+            "CatBoost + SHAP + FAA cost model, Streamlit UI (EN / UZ / RU).  \n"
+            f"© 2026 {AUTHOR} · [GitHub]({GITHUB_URL}) · [Hugging Face]({HF_URL})"
+        ),
+    },
+)
+
+
+def ui_theme() -> dict:
+    """Colours that live in code (map, risk labels, inline HTML), matched to the active theme.
+    Surfaces, text and accent come from .streamlit/config.toml; this only mirrors them."""
+    try:
+        dark = st.context.theme.type != "light"
+    except Exception:  # no browser context (tests, old Streamlit)
+        dark = True
+    if dark:
+        return dict(
+            dark=True, muted="#A3ACBF", arrow="#6FA8FF",
+            risk={"low": "#3DD68C", "moderate": "#FFC53D", "high": "#FF8C42", "critical": "#FF6B6B"},
+            map_land="#243049", map_border="#3A4760", map_route="#FF6B6B",
+            map_airport="#6FA8FF", map_airport_edge="#141B2B",
+        )
+    return dict(
+        dark=False, muted="#6B7280", arrow="#1A6FD1",
+        risk={"low": "#1E9E5A", "moderate": "#B97A00", "high": "#D9641B", "critical": "#C62828"},
+        map_land="#E9EDF3", map_border="#C5CCD8", map_route="#E03E3E",
+        map_airport="#1A6FD1", map_airport_edge="#FFFFFF",
+    )
+
+
+THEME = ui_theme()
 
 # Language: detected once from the browser locale, then driven by the sidebar selector.
 if SESSION_KEY not in st.session_state:
@@ -78,12 +120,32 @@ def calculate_economic_impact(prob, distance_miles):
 def get_risk_level(prob):
     """Risk bucket by raw probability (base delay rate 18.9 %, decision threshold 0.37)."""
     if prob < 0.2:
-        return t("risk.low"), "green"
+        return t("risk.low"), THEME["risk"]["low"]
     if prob < 0.37:
-        return t("risk.moderate"), "orange"
+        return t("risk.moderate"), THEME["risk"]["moderate"]
     if prob < 0.55:
-        return t("risk.high"), "red"
-    return t("risk.critical"), "darkred"
+        return t("risk.high"), THEME["risk"]["high"]
+    return t("risk.critical"), THEME["risk"]["critical"]
+
+
+@st.cache_data(show_spinner=False)
+def logo_data_uri(path: str) -> str:
+    with open(path, "rb") as fh:
+        return "data:image/png;base64," + base64.b64encode(fh.read()).decode()
+
+
+def airline_logo(path: str) -> None:
+    """Full-width logo. Airline logos are drawn for light backgrounds, so in the dark theme they sit on
+    a light rounded plate; the plate is pulled up 10 px so the logo keeps its place next to the name."""
+    if THEME["dark"]:
+        box = "background:#EEF1F6;border-radius:12px;padding:8px;margin-top:-10px;"
+    else:
+        box = "padding:0 8px;"
+    st.markdown(
+        f'<div style="{box}display:flex;align-items:center;justify-content:center;">'
+        f'<img src="{logo_data_uri(path)}" alt="airline logo" style="width:100%;height:auto;display:block;"></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def feature_label(name: str) -> str:
@@ -117,21 +179,21 @@ analytics = FlightAnalytics(model)
 # --- sidebar -----------------------------------------------------------------
 
 with st.sidebar:
-    st.selectbox(t("sidebar.language"), options=list(LANGS), format_func=LANGS.get, key=SESSION_KEY)
+    st.selectbox(f":material/language: {t('sidebar.language')}", options=list(LANGS), format_func=LANGS.get, key=SESSION_KEY)
     st.header(t("sidebar.header"))
 
     unknown = t("sidebar.unknown")
     airline_code = st.selectbox(
-        t("sidebar.airline"), data["airlines"],
+        f":material/airlines: {t('sidebar.airline')}", data["airlines"],
         format_func=lambda x: f"{line_names.get(x, unknown)} ({x})",
     )
     origin_code = st.selectbox(
-        t("sidebar.origin"), data["airports"],
+        f":material/flight_takeoff: {t('sidebar.origin')}", data["airports"],
         format_func=lambda x: f"{x} - {air_info.get(x, {}).get('AIRPORT', unknown)}",
     )
     dest_list = data["lookup"][data["lookup"]["ORIGIN_AIRPORT"] == origin_code]["DESTINATION_AIRPORT"].unique()
     dest_code = st.selectbox(
-        t("sidebar.destination"), sorted(dest_list),
+        f":material/flight_land: {t('sidebar.destination')}", sorted(dest_list),
         format_func=lambda x: f"{x} - {air_info.get(x, {}).get('AIRPORT', unknown)}",
     )
 
@@ -140,6 +202,12 @@ with st.sidebar:
     days_in_month = calendar.monthrange(DATA_YEAR, month)[1]
     day = st.slider(t("sidebar.day"), 1, days_in_month, min(15, days_in_month))
     dep_hour = st.slider(t("sidebar.dep_hour"), 0, 23, 12)
+
+    st.divider()
+    links = [f"[GitHub]({GITHUB_URL})", f"[Hugging Face]({HF_URL})"]
+    if PORTFOLIO_URL:
+        links.append(f"[{t('footer.portfolio')}]({PORTFOLIO_URL})")
+    st.caption(f"© 2026 {AUTHOR}  \n" + " · ".join(links))
 
 # --- main --------------------------------------------------------------------
 
@@ -163,13 +231,13 @@ with tab1:
                 <div style="flex:1;">
                     <h1 style="margin:0; font-family:serif; font-size:2.3rem; line-height:1;">{origin_code}</h1>
                     <div style="font-weight:bold; font-size:0.85rem; margin-top:2px; font-family:sans-serif;">{origin_full.get('AIRPORT', unknown)}</div>
-                    <div style="color:gray; font-size:0.75rem; font-family:sans-serif;">{origin_full.get('CITY', '')}, {origin_full.get('STATE', '')}</div>
+                    <div style="color:{THEME['muted']}; font-size:0.75rem; font-family:sans-serif;">{origin_full.get('CITY', '')}, {origin_full.get('STATE', '')}</div>
                 </div>
-                <div style="flex:0.2; text-align:center; padding-top:22px; font-size:1.5rem; color:#4A90E2;">➔</div>
+                <div style="flex:0.2; text-align:center; padding-top:22px; font-size:1.5rem; color:{THEME['arrow']};">➔</div>
                 <div style="flex:1; text-align:right;">
                     <h1 style="margin:0; font-family:serif; font-size:2.3rem; line-height:1;">{dest_code}</h1>
                     <div style="font-weight:bold; font-size:0.85rem; margin-top:2px; font-family:sans-serif;">{dest_full.get('AIRPORT', unknown)}</div>
-                    <div style="color:gray; font-size:0.75rem; font-family:sans-serif;">{dest_full.get('CITY', '')}, {dest_full.get('STATE', '')}</div>
+                    <div style="color:{THEME['muted']}; font-size:0.75rem; font-family:sans-serif;">{dest_full.get('CITY', '')}, {dest_full.get('STATE', '')}</div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -182,11 +250,11 @@ with tab1:
 
     with c3:
         st.markdown(t("airline.header"))
-        text_col, logo_col = st.columns([1, 1.2])
+        text_col, logo_col = st.columns([0.75, 1.25])
         with logo_col:
             logo_path = os.path.join(LOGOS_DIR, f"{airline_code}.png")
             if os.path.isfile(logo_path):
-                st.image(logo_path)
+                airline_logo(logo_path)
             else:
                 st.write("🛩")
         with text_col:
@@ -203,10 +271,18 @@ with tab1:
                 lon=[air_info[origin_code]["LONGITUDE"], air_info[dest_code]["LONGITUDE"]],
                 lat=[air_info[origin_code]["LATITUDE"], air_info[dest_code]["LATITUDE"]],
                 mode="lines+markers",
-                line=dict(width=5, color="#FF4B4B"),
-                marker=dict(size=15, color="#1C83E1"),
+                line=dict(width=5, color=THEME["map_route"]),
+                marker=dict(size=15, color=THEME["map_airport"], line=dict(width=2, color=THEME["map_airport_edge"])),
+                hoverinfo="skip",
             ))
-            fig.update_layout(height=400, margin={"r": 0, "t": 0, "l": 0, "b": 0}, geo_scope="usa")
+            # The map takes the page colours: land one step lighter than the page, water = page background
+            fig.update_geos(
+                scope="usa", bgcolor="rgba(0,0,0,0)", showland=True, landcolor=THEME["map_land"],
+                showlakes=True, lakecolor="rgba(0,0,0,0)", subunitcolor=THEME["map_border"],
+                countrycolor=THEME["map_border"], coastlinecolor=THEME["map_border"], showframe=False,
+            )
+            fig.update_layout(height=400, margin={"r": 0, "t": 0, "l": 0, "b": 0},
+                              paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig, width="stretch")
 
     impact = None

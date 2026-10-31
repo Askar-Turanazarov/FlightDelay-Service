@@ -7,5 +7,42 @@ headless = true
 [browser]
 gatherUsageStats = false
 
+[client]
+# Hide developer options (rerun, developer settings, etc.) from the visitor-facing menu.
+toolbarMode = "viewer"
+
+# Two switchable themes (menu -> Settings). Both are built on one cool slate hue:
+# page -> sidebar -> inputs are three steps of lightness, one coral accent, semantic colours
+# only for risk. Dark is the default; chart and map colours follow st.context.theme in src/app.py.
 [theme]
 base = "dark"
+baseRadius = "0.6rem"
+paddingTop = "1.5rem"
+
+[theme.dark]
+primaryColor = "#FF6B6B"
+backgroundColor = "#141B2B"
+secondaryBackgroundColor = "#222C42"
+textColor = "#E4E8F0"
+linkColor = "#6FA8FF"
+borderColor = "#2F3A52"
+
+[theme.dark.sidebar]
+backgroundColor = "#1A2236"
+secondaryBackgroundColor = "#222C42"
+borderColor = "#2F3A52"
+paddingTop = "1.5rem"
+
+[theme.light]
+primaryColor = "#E03E3E"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F7FA"
+textColor = "#1F2937"
+linkColor = "#1A6FD1"
+borderColor = "#D9DEE7"
+
+[theme.light.sidebar]
+backgroundColor = "#EEF1F6"
+secondaryBackgroundColor = "#FFFFFF"
+borderColor = "#D9DEE7"
+paddingTop = "1.5rem"
