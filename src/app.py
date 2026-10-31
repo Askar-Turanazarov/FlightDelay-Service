@@ -57,6 +57,16 @@ st.set_page_config(
     },
 )
 
+# Streamlit has no config option for the top padding (the header bar is 60 px and opaque, so the
+# page content cannot start higher than ~3rem). Pull the main block and the sidebar content up so
+# the title and the first sidebar label sit on one line just below the header.
+st.html(
+    "<style>"
+    "[data-testid='stMainBlockContainer']{padding-top:3rem !important;}"
+    "[data-testid='stSidebarUserContent']{margin-top:-0.5rem;}"
+    "</style>"
+)
+
 
 def ui_theme() -> dict:
     """Colours that live in code (map, risk labels, inline HTML), matched to the active theme.
