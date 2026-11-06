@@ -12,11 +12,11 @@
 An end-to-end machine-learning service that estimates the probability that a US domestic flight
 will arrive **more than 15 minutes late** (the FAA definition of a delay) using only the information
 known at planning time: airline, origin and destination airports, date, departure hour, distance and
-scheduled flight time. On top of the forecast the app explains *why* (per-flight Shapley values) and
+scheduled flight time, plus the expected weather at both airports for the default model. On top of the forecast the app explains *why* (per-flight Shapley values) and
 translates the risk into an **expected financial loss** using FAA cost assumptions.
 
 **🚀 Live demo:** https://flight-delay-askar.streamlit.app · project page on [Hugging Face Spaces](https://huggingface.co/spaces/AskarT/flight-delay-risk)
-*(free Streamlit Community Cloud instance: it sleeps after 12 h without visitors, and the first load takes about a minute while the model is downloaded; it serves the [compact model](#two-model-variants))*
+*(free Streamlit Community Cloud instance: it sleeps after 12 h without visitors, and the first load takes about a minute while the model is downloaded. The model is picked in the sidebar: the [weather model](#model-variants) by default or the compact diploma model; `?model=compact` in the address opens the latter.)*
 
 ![Prediction screen](docs/img/en/01_prediction.png)
 
@@ -32,7 +32,7 @@ translates the risk into an **expected financial loss** using FAA cost assumptio
 2. [Data](#data)
 3. [Approach](#approach)
 4. [Results](#results)
-5. [Two model variants](#two-model-variants)
+5. [Model variants](#model-variants)
 6. [Model artifacts](#model-artifacts)
 7. [Run it](#run-it)
 8. [Project structure](#project-structure)
@@ -43,10 +43,14 @@ translates the risk into an **expected financial loss** using FAA cost assumptio
 
 ## What the service does
 
-* **Forecast** — a CatBoost classifier returns the raw probability of a significant delay.
-  The business decision threshold is **0.37** (tuned for recall, see [Results](#results)):
-  at or above it the verdict is "a delay is likely".
-* **Context** — the probability is compared with the average delay rate in the data (18.9 %),
+* **Forecast** — a CatBoost classifier returns the probability of a significant delay. Three
+  [model variants](#model-variants) exist and the sidebar switches between them. The default
+  **weather model** also takes wind, visibility, precipitation and hazards at both airports and
+  returns a calibrated probability with the threshold **0.20**. The diploma models return the raw
+  probability with the threshold **0.37** (tuned for recall, see [Results](#results)). At or above the
+  threshold the verdict is "a delay is likely".
+* **Context** — the probability is compared with the average delay rate in the model's data
+  (17.9 % for the whole of 2015, 18.9 % for the diploma data),
   so a user sees "1.8× the average" instead of an abstract number. A *risk index* bar stretches
   the probability around the threshold for readability only; it is not a calibration.
 * **Explanation** — Shapley values computed natively by CatBoost show which factors pushed this
@@ -116,8 +120,8 @@ negative) is more expensive for an airline than a false alarm, the threshold was
 
 Test set: 408 907 flights (20 % hold-out). Source of truth: [`reports/metrics/`](reports/metrics/).
 The numbers below are those of the **full model** (`train_final.py`), the reference result of the
-diploma; the compact variant served by the live demo is compared with it in the
-[next section](#two-model-variants).
+diploma; the compact variant and the weather model of the live demo are compared with it in
+[Model variants](#model-variants).
 
 | Metric | Value |
 |---|---|
@@ -138,10 +142,58 @@ Threshold sweep (`reports/metrics/recall085_results.txt`):
 |:--:|:--:|
 | ![PR curve](reports/figures/pr_curve_optimal_threshold.png) | ![Feature importance](reports/figures/CatBoost%20Feature%20Importance.jpg) |
 
+The [Results](#results) above belong to the diploma model; the weather model is described under
+[Model variants](#model-variants).
+
 Earlier experiments (PCA, ensembles with LightGBM, 30/45-minute targets) are kept in
 `notebooks/archive/` and `reports/figures/`; the final model outperformed all of them on ROC-AUC.
 
-## Two model variants
+## Model variants
+
+| | Weather model (default) | Compact diploma model | Full diploma model |
+|---|---|---|---|
+| Inputs | flight + weather at both airports | flight only | flight only |
+| Training data | all of 2015 except 73 whole days (292 days) | first 2.1 M flights of 2015 (January–May), split 80 / 20 | same as compact |
+| Test | the 73 hidden days, 1.1 M flights | random 20 % of the same months | same as compact |
+| ROC-AUC on its own test | 0.698 | 0.779 | 0.786 |
+| ROC-AUC on new dates | **0.698** (73 days) | 0.637 (June–December) | 0.630 (June–December) |
+| Probability | calibrated (isotonic) | raw | raw |
+| Threshold / recall / precision | 0.20 / 0.54 / 0.31 | 0.37 / 0.82 / 0.30 | 0.37 / 0.82 / 0.31 |
+| Pipeline on disk / RAM | 40 MB / 0.4 GB | 114 MB / 0.6 GB | 433 MB / 1.5 GB |
+| Offered in the app | always, default | always | only where its file lies in `models/` |
+
+The columns were measured on different tests, so only the row "ROC-AUC on new dates" compares them.
+
+### Weather model (default)
+
+**Why it exists.** The diploma models score 0.78 on random flights, but those flights come from dates
+the model had already seen in training. On new dates (June–December) they score 0.63–0.64: in part
+the models memorise bad days. More data barely helped: the same setup trained on the whole year
+scores 0.659 on 73 hidden days. Weather is the first input that lifted the score on new dates:
+0.659 → 0.699.
+
+**What it adds.** Hourly METAR reports of 2015 (Iowa Environmental Mesonet), the worst conditions of
+the hour at the origin in the departure hour and at the destination in the arrival hour, reduced to
+four categories each: wind (light < 10 kt, moderate 10–19, strong 20–33, gale ≥ 34), visibility
+(good ≥ 5 mi, reduced 1–5, poor < 1), precipitation (none, rain, snow, freezing) and hazards (none,
+fog, thunderstorm, icing, other).
+
+**Why the light version.** Category combinations are limited to two (`max_ctr_complexity=2`): the
+score on new dates is the same as with three (0.698 vs 0.699), the file is 40 MB instead of 170 MB
+and the memory is halved, so both demo models fit the free host together.
+
+**Probability and threshold.** The raw output is inflated by the class weight (mean 0.41 against a
+delay share of 0.18), so it goes through an isotonic calibration (`models/calibration_weather.json`):
+20 % means that about one such flight in five arrived late. The alarm starts at 0.20, the right
+threshold if a missed delay costs about four false alarms; at it the model catches 54 % of delays,
+and 31 % of its alarms are right. Risk bands: low < 0.12, moderate 0.12–0.20, high 0.20–0.35,
+critical ≥ 0.35; on the 73 test days 8 %, 16 %, 25 % and 48 % of the flights in them arrived late.
+
+**Limits.** It learned from the weather that actually happened, while the app takes a forecast, so
+in real use the score is below 0.698. Full report: `reports/metrics/weather_model_results.txt`.
+The training scripts of this model are not in this repository yet.
+
+### Compact diploma model
 
 The full model is 433 MB on disk and about **1.5 GB in RAM** (2.8 GB peak while unpickling), because
 CatBoost stores counter (CTR) tables for combinations of up to four categorical features
@@ -169,7 +221,8 @@ Both files are published in the same [Hugging Face repository](https://huggingfa
 The other configurations tried (CTR combinations ≤ 2 → AUC 0.754–0.759 at 36–52 MB; ≤ 1 → AUC
 0.733–0.751 at 5–7 MB) lost too much quality: the high-order category combinations carry real signal.
 
-Individual predictions of the two variants differ slightly (for example JFK → LAX on 15 July at
+The screenshots at the top of this README were taken with the compact model, before the model
+selector existed. Individual predictions of the two diploma variants differ slightly (for example JFK → LAX on 15 July at
 18:00: 0.375 full vs 0.469 compact), so the figures on a screenshot depend on which model produced it.
 
 <details>
@@ -192,18 +245,23 @@ Individual predictions of the two variants differ slightly (for example JFK → 
 
 | File | Size | Where | Used by the app |
 |---|---|---|---|
-| `model_pipeline_compact.pkl` — compact pipeline (feature engineer + CatBoost), joblib `compress=3` | 114 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **yes, by default** |
-| `model_pipeline_main.pkl` — full pipeline, same structure | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | with `MODEL_VARIANT=full` |
+| `model_pipeline_weather.pkl` — weather pipeline (feature engineer + CatBoost, 21 inputs) | 40 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **yes, by default** |
+| `calibration_weather.json` — isotonic calibration, threshold and risk bands of the weather model | 8 KB | this repo | with the weather model |
+| `model_pipeline_compact.pkl` — compact diploma pipeline, joblib `compress=3` | 114 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | yes, picked in the sidebar |
+| `model_pipeline_main.pkl` — full diploma pipeline, same structure | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | when the file is in `models/` or `MODEL_VARIANT=full` |
 | `catboost_model_compact.cbm`, `catboost_model_main.cbm` — the same CatBoost models, native format | 326 MB, 1.29 GB | local only | no |
 | `lookup_data.joblib` — routes, airports, airlines for the UI | 0.1 MB | this repo | yes |
 
-**Loading logic** (`src/model_loader.py`): the variant is chosen by the `MODEL_VARIANT` environment
-variable (`compact` by default, `full` for the diploma model). If the corresponding pickle exists in
-`models/` it is used; otherwise the file is downloaded once from the Hub with `huggingface_hub` and
-cached. `HF_MODEL_REPO` and `HF_MODEL_FILE` override the source entirely. The "Model evidence" tab of
-the app shows which variant is loaded and the comparison table above.
+**Loading logic** (`src/model_loader.py`, `src/app.py`): the visitor picks the model in the sidebar
+(also `?model=weather|compact|full` in the address). `MODEL_VARIANT` sets the one opened by default
+(`weather` unless set). A model is loaded the first time anyone picks it: from `models/` if the
+pickle is there, otherwise downloaded once from the Hub with `huggingface_hub` and cached. It then
+stays in memory for every visitor of the server process (`st.cache_resource`, one entry per model),
+so only the first switch waits a few seconds; both demo models together take about 0.85 GB.
+`HF_MODEL_REPO` overrides the source repository and `HF_MODEL_FILE` the file of the default model.
+The "Model evidence" tab shows which model is loaded and the comparison table above.
 
-**Compatibility:** the pickle is bound to Python 3.10, catboost 1.2.8, scikit-learn 1.7.2,
+**Compatibility:** the pickles are bound to Python 3.10, catboost 1.2.8, scikit-learn 1.7.2,
 numpy 2.2.6, pandas 2.3.3 (all pinned in `requirements.txt`) and to the class in
 `src/feature_engineering.py`. Changing that file requires retraining.
 
@@ -223,8 +281,9 @@ streamlit run src/app.py
 On Windows you can simply double-click `START_PROJECT.bat`: it creates the venv, installs the
 requirements and starts the app on the first free port from 8505.
 
-The compact model is fetched from Hugging Face on the first start (114 MB). To use a local copy put
-it at `models/model_pipeline_compact.pkl`. For the full diploma model (433 MB, about 1.5 GB RAM):
+The weather model is fetched from Hugging Face on the first start (40 MB), the compact one the first
+time it is picked (114 MB). To use local copies put them into `models/`. For the full diploma model
+(433 MB, about 1.5 GB RAM) put `model_pipeline_main.pkl` there, or let it download:
 
 ```bash
 set MODEL_VARIANT=full          # Windows   |   export MODEL_VARIANT=full on Linux/macOS
@@ -275,14 +334,14 @@ EDA and the training story live in `notebooks/01_EDA_and_Training.ipynb`.
 flight_delay_service/
 ├── src/
 │   ├── app.py                 Streamlit UI
-│   ├── analytics.py           risk index, relative risk, SHAP explanations
+│   ├── analytics.py           calibration, risk bands, relative risk, SHAP explanations
 │   ├── feature_engineering.py FlightFeatureEngineer (part of the pickled pipeline)
-│   ├── model_loader.py        local file or Hugging Face Hub download
+│   ├── model_loader.py        model variants, weather inputs, local file or Hub download
 │   ├── train_final.py         training script, full model (diploma reference)
 │   ├── train_compact.py       training script, compact model (live demo)
 │   └── i18n/                  en.py, uz.py, ru.py + locale detection
 ├── data/                      airlines.csv, airports.csv (flights.csv is downloaded, not committed)
-├── models/                    lookup_data.joblib (+ model_pipeline_compact.pkl / _main.pkl, downloaded)
+├── models/                    lookup_data.joblib, calibration_weather.json (+ model pickles, downloaded)
 ├── reports/figures/           PR curve, feature importance, confusion matrices
 ├── reports/metrics/           raw metric reports from training
 ├── notebooks/                 01_EDA_and_Training.ipynb, archive/ with experiments
@@ -294,12 +353,13 @@ flight_delay_service/
 
 ## Known limitations & roadmap
 
-* **Model size.** The full model needs about 1.5 GB of RAM, which is why the public demo serves the
-  compact variant (0.6 GB, −0.007 ROC-AUC, see [Two model variants](#two-model-variants)). Smaller
-  configurations lose noticeably more quality; a further reduction would need different features
-  rather than CatBoost settings.
-* **Risk index is not calibration.** The main number shown is the raw probability; the index bar is
-  a visual transform. A proper `CalibratedClassifierCV` step is on the roadmap.
+* **New dates are harder.** The diploma models score 0.78 on random flights but 0.63–0.64 on dates
+  they never saw; the weather model reaches 0.698 on hidden days, and with a real forecast instead of
+  observed weather the score is lower still. See [Model variants](#model-variants).
+* **Model size.** The full model needs about 1.5 GB of RAM, so the public demo offers the weather
+  model and the compact diploma model (0.4 + 0.6 GB).
+* **Calibration.** Only the weather model is calibrated. The diploma models show the raw probability,
+  inflated by the class weight; the risk index bar is a visual transform only.
 * **2015 US data only.** Airports, airlines and traffic patterns are those of 2015; the app is a
   demonstration of the method, not an operational tool.
 * **Traffic features need known dates.** `traffic_density` and `AIRLINE_FLIGHT_COUNT` are looked up
@@ -310,5 +370,6 @@ flight_delay_service/
 
 * `docs/Report.pdf` — diploma report, `docs/Tech_report.pdf` — technical report (both in Russian).
 * Model card: https://huggingface.co/AskarT/flight-delay-catboost
+* Metric reports: `reports/metrics/` (`weather_model_results.txt`, `compact_model_results.txt`, ...).
 
 **Askar Turanazarov** — Data Science diploma project, 2026. Released under the [MIT License](LICENSE).

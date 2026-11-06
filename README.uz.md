@@ -12,12 +12,12 @@
 AQSH ichki reysining **15 daqiqadan koʻproq kechikib qoʻnish** ehtimolini (FAA boʻyicha kechikish
 taʼrifi) baholaydigan toʻliq mashinaviy oʻrganish xizmati. Bashorat uchun faqat rejalashtirish
 bosqichida maʼlum boʻlgan maʼlumotlar ishlatiladi: aviakompaniya, uchish va qoʻnish aeroportlari,
-sana, uchish soati, masofa va rejadagi parvoz vaqti. Bashorat ustiga ilova *nima uchun* shunday
+sana, uchish soati, masofa va rejadagi parvoz vaqti, sukut boʻyicha modelda esa ikkala aeroportdagi kutilayotgan ob-havo ham. Bashorat ustiga ilova *nima uchun* shunday
 natija chiqqanini tushuntiradi (har bir reys uchun Shepli qiymatlari) va xavfni FAA xarajat
 meʼyorlari asosida **kutilayotgan moliyaviy zararga** aylantiradi.
 
 **🚀 Jonli demo:** https://flight-delay-askar.streamlit.app · loyiha sahifasi [Hugging Face Spaces](https://huggingface.co/spaces/AskarT/flight-delay-risk) da
-*(bepul Streamlit Community Cloud: 12 soat tashrifsiz qolsa uxlab qoladi; birinchi ochilishda model yuklab olinadi va bir daqiqacha vaqt ketadi; demo [ixcham modelda](#modelning-ikki-varianti) ishlaydi)*
+*(bepul Streamlit Community Cloud: 12 soat tashrifsiz qolsa uxlab qoladi; birinchi ochilishda model yuklab olinadi va bir daqiqacha vaqt ketadi. Model yon panelda tanlanadi: sukut boʻyicha [ob-havo modeli](#model-variantlari) yoki ixcham diplom modeli; manzildagi `?model=compact` ikkinchisini ochadi.)*
 
 ![Bashorat ekrani](docs/img/uz/01_prediction.png)
 
@@ -33,7 +33,7 @@ meʼyorlari asosida **kutilayotgan moliyaviy zararga** aylantiradi.
 2. [Maʼlumotlar](#maʼlumotlar)
 3. [Yondashuv](#yondashuv)
 4. [Natijalar](#natijalar)
-5. [Modelning ikki varianti](#modelning-ikki-varianti)
+5. [Model variantlari](#model-variantlari)
 6. [Model artefaktlari](#model-artefaktlari)
 7. [Ishga tushirish](#ishga-tushirish)
 8. [Loyiha tuzilmasi](#loyiha-tuzilmasi)
@@ -44,13 +44,17 @@ meʼyorlari asosida **kutilayotgan moliyaviy zararga** aylantiradi.
 
 ## Xizmat nima qiladi
 
-* **Bashorat** — CatBoost tasniflagichi jiddiy kechikishning xom ehtimolini qaytaradi.
-  Biznes qaror chegarasi — **0.37** (toʻliqlik, yaʼni recall uchun sozlangan, qarang:
-  [Natijalar](#natijalar)): shu qiymat va undan yuqorida xulosa «kechikish ehtimoli yuqori» boʻladi.
-* **Kontekst** — ehtimol maʼlumotlardagi oʻrtacha kechikish ulushi (18,9 %) bilan solishtiriladi,
-  shuning uchun foydalanuvchi mavhum raqam oʻrniga «oʻrtachadan 1,8 barobar yuqori» koʻradi.
-  *Xavf indeksi* shkalasi ehtimolni chegara atrofida faqat oʻqilishi oson boʻlishi uchun choʻzadi;
-  bu kalibrlash emas.
+* **Bashorat** — CatBoost tasniflagichi jiddiy kechikish ehtimolini qaytaradi. Uchta
+  [model varianti](#model-variantlari) bor, yon panel ular orasida almashtiradi. Sukut boʻyicha
+  ishlaydigan **ob-havo modeli** ikkala aeroportdagi shamol, koʻrinish, yogʻingarchilik va xavfli
+  hodisalarni ham hisobga oladi va **0.20** chegarasi bilan kalibrlangan ehtimolni qaytaradi. Diplom
+  modellari **0.37** chegarasi bilan xom ehtimolni qaytaradi (toʻliqlik, yaʼni recall uchun sozlangan,
+  qarang: [Natijalar](#natijalar)). Ehtimol chegaraga teng yoki undan yuqori boʻlsa, xulosa
+  «kechikish ehtimoli yuqori» boʻladi.
+* **Kontekst** — ehtimol model maʼlumotlaridagi oʻrtacha kechikish ulushi bilan solishtiriladi
+  (butun 2015-yil uchun 17,9 %, diplom maʼlumotlari uchun 18,9 %), shuning uchun foydalanuvchi
+  mavhum raqam oʻrniga «oʻrtachadan 1,8 barobar yuqori» koʻradi. *Xavf indeksi* shkalasi
+  ehtimolni chegara atrofida faqat oʻqilishi oson boʻlishi uchun choʻzadi; bu kalibrlash emas.
 * **Tushuntirish** — CatBoost oʻzi hisoblaydigan Shepli qiymatlari aynan shu reysni kechikish
   tomon yoki undan uzoqqa qaysi omillar surganini koʻrsatadi (aeroport, yoʻnalish, kun, soat,
   aviakompaniya va h.k.).
@@ -118,7 +122,8 @@ saralab chiqildi va **0.37** da qotirildi: toʻliqlik 0.82, aniqlik 0.31.
 
 Test toʻplami: 408 907 reys (20 % ajratilgan qism). Manba: [`reports/metrics/`](reports/metrics/).
 Quyidagi raqamlar **toʻliq model** (`train_final.py`), yaʼni diplom ishining asosiy natijasiga tegishli;
-jonli demoda ishlaydigan ixcham variant u bilan [keyingi boʻlimda](#modelning-ikki-varianti) taqqoslangan.
+jonli demodagi ixcham variant va ob-havo modeli u bilan [Model variantlari](#model-variantlari) boʻlimida
+taqqoslangan.
 
 | Koʻrsatkich | Qiymat |
 |---|---|
@@ -139,10 +144,60 @@ Chegaralarni saralash (`reports/metrics/recall085_results.txt`):
 |:--:|:--:|
 | ![PR egri chizigʻi](reports/figures/pr_curve_optimal_threshold.png) | ![Omillar ahamiyati](reports/figures/CatBoost%20Feature%20Importance.jpg) |
 
+Yuqoridagi [Natijalar](#natijalar) diplom modeliga tegishli; ob-havo modeli
+[Model variantlari](#model-variantlari) boʻlimida tasvirlangan.
+
 Oldingi tajribalar (PCA, LightGBM bilan ansambllar, 30/45 daqiqalik maqsadlar) `notebooks/archive/`
 va `reports/figures/` da saqlangan; yakuniy model ROC-AUC boʻyicha ularning barchasidan ustun chiqdi.
 
-## Modelning ikki varianti
+## Model variantlari
+
+| | Ob-havo modeli (sukut boʻyicha) | Ixcham diplom modeli | Toʻliq diplom modeli |
+|---|---|---|---|
+| Kirish maʼlumotlari | reys + ikkala aeroportdagi ob-havo | faqat reys | faqat reys |
+| Oʻqitish | 73 ta butun kundan tashqari butun 2015-yil (292 kun) | 2015-yilning birinchi 2,1 mln reysi (yanvar–may), 80 / 20 boʻlinish | ixcham bilan bir xil |
+| Tekshiruv | 73 ta yashirin kun, 1,1 mln reys | oʻsha oylardagi tasodifiy 20 % | ixcham bilan bir xil |
+| Oʻz tekshiruvidagi ROC-AUC | 0.698 | 0.779 | 0.786 |
+| Yangi sanalardagi ROC-AUC | **0.698** (73 kun) | 0.637 (iyun–dekabr) | 0.630 (iyun–dekabr) |
+| Ehtimol | kalibrlangan (izotonik) | xom | xom |
+| Chegara / recall / precision | 0.20 / 0.54 / 0.31 | 0.37 / 0.82 / 0.30 | 0.37 / 0.82 / 0.31 |
+| Diskdagi pipeline / RAM | 40 MB / 0,4 GB | 114 MB / 0,6 GB | 433 MB / 1,5 GB |
+| Ilovada mavjud | doim, sukut boʻyicha | doim | faqat fayli `models/` da boʻlgan joyda |
+
+Ustunlar turli tekshiruvlarda oʻlchangan, shuning uchun ularni faqat «Yangi sanalardagi ROC-AUC» qatori
+boʻyicha taqqoslash mumkin.
+
+### Ob-havo modeli (sukut boʻyicha)
+
+**Nega kerak.** Diplom modellari tasodifiy reyslarda 0.78 beradi, lekin bu reyslar model oʻqitishda
+allaqachon koʻrgan sanalardan olingan. Yangi sanalarda (iyun–dekabr) ular 0.63–0.64 beradi: modellar
+qisman yomon kunlarni yodlab oladi. Koʻproq maʼlumot deyarli yordam bermadi: butun yilda oʻqitilgan
+xuddi shu sxema 73 ta yashirin kunda 0.659 beradi. Ob-havo yangi sanalarda natijani oshirgan birinchi
+kirish maʼlumoti boʻldi: 0.659 → 0.699.
+
+**Nima qoʻshadi.** 2015-yilgi soatlik METAR hisobotlari (Iowa Environmental Mesonet): uchish
+aeroportida uchish soatidagi va qoʻnish aeroportida qoʻnish soatidagi eng yomon sharoitlar, har bir
+aeroport uchun toʻrtta kategoriyali omilga keltirilgan: shamol (kuchsiz < 10 uzel, oʻrtacha 10–19,
+kuchli 20–33, boʻron ≥ 34), koʻrinish (yaxshi ≥ 5 mil, pasaygan 1–5, yomon < 1), yogʻingarchilik (yoʻq,
+yomgʻir, qor, muzli yomgʻir) va xavfli hodisalar (yoʻq, tuman, momaqaldiroq, muzlash, boshqa).
+
+**Nega yengil versiya.** Kategoriya kombinatsiyalari ikkita omil bilan cheklangan
+(`max_ctr_complexity=2`): yangi sanalardagi natija uchta bilan bir xil (0.698 va 0.699), fayl 170 MB
+oʻrniga 40 MB, xotira esa ikki baravar kam, shuning uchun ikkala demo modeli bepul xostingga birga sigʻadi.
+
+**Ehtimol va chegara.** Xom natija sinf vazni tufayli oshirilgan (oʻrtacha 0.41, kechikishlar ulushi
+esa 0.18), shuning uchun u izotonik kalibrlashdan oʻtadi (`models/calibration_weather.json`): 20 %
+shunga oʻxshash har beshinchi reys kechikkanini bildiradi. Ogohlantirish 0.20 dan boshlanadi — agar
+oʻtkazib yuborilgan kechikish taxminan toʻrtta yolgʻon ogohlantirishga teng boʻlsa, bu toʻgʻri chegara;
+bunda model kechikishlarning 54 % ini topadi va ogohlantirishlarining 31 % i oqlanadi. Xavf darajalari:
+past < 0.12, oʻrtacha 0.12–0.20, yuqori 0.20–0.35, kritik ≥ 0.35; 73 ta test kunida bu darajalardagi
+reyslarning mos ravishda 8 %, 16 %, 25 % va 48 % i kechikkan.
+
+**Cheklovlar.** Model haqiqatda boʻlgan ob-havoda oʻrgangan, ilova esa prognozni qabul qiladi, shuning
+uchun amalda natija 0.698 dan past. Toʻliq hisobot: `reports/metrics/weather_model_results.txt`.
+Bu modelning oʻqitish skriptlari hozircha shu repozitoriyda yoʻq.
+
+### Ixcham diplom modeli
 
 Toʻliq model diskda 433 MB, xotirada esa taxminan **1,5 GB** (pickle ochilayotganda choʻqqi 2,8 GB) joy
 oladi, chunki CatBoost toʻrttagacha kategoriyali omil kombinatsiyasi uchun hisoblagich (CTR) jadvallarini
@@ -170,7 +225,8 @@ Sinab koʻrilgan boshqa konfiguratsiyalar (CTR kombinatsiyalari ≤ 2 → AUC 0.
 0.733–0.751, 5–7 MB) sifatni haddan tashqari yoʻqotdi: yuqori tartibli kategoriya kombinatsiyalari haqiqiy
 signal tashiydi.
 
-Ikki variantning alohida bashoratlari biroz farq qiladi (masalan, JFK → LAX, 15-iyul, 18:00: toʻliq 0,375,
+Ushbu README boshidagi skrinshotlar model tanlagichi paydo boʻlishidan oldin ixcham modelda olingan.
+Ikki diplom variantining alohida bashoratlari biroz farq qiladi (masalan, JFK → LAX, 15-iyul, 18:00: toʻliq 0,375,
 ixcham 0,469), shuning uchun skrinshotdagi raqamlar uni qaysi model bergan boʻlsa, oʻshanga bogʻliq.
 
 <details>
@@ -193,18 +249,24 @@ ixcham 0,469), shuning uchun skrinshotdagi raqamlar uni qaysi model bergan boʻl
 
 | Fayl | Hajmi | Qayerda | Ilova ishlatadi |
 |---|---|---|---|
-| `model_pipeline_compact.pkl` — ixcham pipeline (omillar transformeri + CatBoost), joblib `compress=3` | 114 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **ha, sukut boʻyicha** |
-| `model_pipeline_main.pkl` — toʻliq pipeline, tuzilishi bir xil | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | `MODEL_VARIANT=full` bilan |
+| `model_pipeline_weather.pkl` — ob-havo pipeline (omillar transformeri + CatBoost, 21 ta kirish omili) | 40 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | **ha, sukut boʻyicha** |
+| `calibration_weather.json` — ob-havo modelining izotonik kalibrlashi, chegarasi va xavf darajalari | 8 KB | shu repozitoriy | ob-havo modeli bilan |
+| `model_pipeline_compact.pkl` — ixcham diplom pipeline, joblib `compress=3` | 114 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | ha, yon panelda tanlanadi |
+| `model_pipeline_main.pkl` — toʻliq diplom pipeline, tuzilishi bir xil | 433 MB | [Hugging Face Hub](https://huggingface.co/AskarT/flight-delay-catboost) | fayl `models/` da boʻlsa yoki `MODEL_VARIANT=full` bilan |
 | `catboost_model_compact.cbm`, `catboost_model_main.cbm` — oʻsha CatBoost modellari, tabiiy formatda | 326 MB, 1,29 GB | faqat lokal | yoʻq |
 | `lookup_data.joblib` — interfeys uchun yoʻnalishlar, aeroportlar, aviakompaniyalar | 0,1 MB | shu repozitoriy | ha |
 
-**Yuklash mantiqi** (`src/model_loader.py`): variant `MODEL_VARIANT` muhit oʻzgaruvchisi bilan tanlanadi
-(sukut boʻyicha `compact`, diplom modeli uchun `full`). Tegishli pickle `models/` da boʻlsa, u ishlatiladi;
-aks holda fayl `huggingface_hub` orqali Hubdan bir marta yuklab olinadi va keshlanadi. `HF_MODEL_REPO` va
-`HF_MODEL_FILE` manbani butunlay oʻzgartiradi. Ilovaning «Model asoslari» boʻlimida qaysi variant
-yuklangani va yuqoridagi taqqoslash jadvali koʻrsatiladi.
+**Yuklash mantiqi** (`src/model_loader.py`, `src/app.py`): tashrif buyuruvchi modelni yon panelda
+tanlaydi (manzilda `?model=weather|compact|full` ham ishlaydi). `MODEL_VARIANT` sukut boʻyicha ochiladigan
+modelni belgilaydi (oʻzgaruvchi berilmagan boʻlsa, `weather`). Model kimdir uni birinchi marta tanlaganda
+yuklanadi: pickle `models/` da boʻlsa, oʻsha yerdan, aks holda `huggingface_hub` orqali Hubdan bir marta
+yuklab olinadi va keshlanadi. Soʻng u server jarayonining barcha tashrif buyuruvchilari uchun xotirada
+qoladi (`st.cache_resource`, har bir model uchun bitta yozuv), shuning uchun faqat birinchi almashtirish
+bir necha soniya kutadi; ikkala demo modeli birgalikda taxminan 0,85 GB oladi. `HF_MODEL_REPO` manba
+repozitoriyni, `HF_MODEL_FILE` esa sukut boʻyicha modelning faylini oʻzgartiradi. «Model asoslari»
+boʻlimida qaysi model yuklangani va yuqoridagi taqqoslash jadvali koʻrsatiladi.
 
-**Moslik:** pickle fayli Python 3.10, catboost 1.2.8, scikit-learn 1.7.2, numpy 2.2.6,
+**Moslik:** pickle fayllari Python 3.10, catboost 1.2.8, scikit-learn 1.7.2, numpy 2.2.6,
 pandas 2.3.3 versiyalariga (barchasi `requirements.txt` da qotirilgan) va
 `src/feature_engineering.py` dagi sinfga bogʻlangan. Bu faylni oʻzgartirish qayta oʻqitishni talab qiladi.
 
@@ -224,9 +286,10 @@ streamlit run src/app.py
 Windowsda `START_PROJECT.bat` faylini ikki marta bosish kifoya: u venv yaratadi, kutubxonalarni
 oʻrnatadi va ilovani 8505 dan boshlab birinchi boʻsh portda ishga tushiradi.
 
-Ixcham model birinchi ishga tushirishda Hugging Facedan yuklab olinadi (114 MB). Lokal nusxadan
-foydalanish uchun uni `models/model_pipeline_compact.pkl` manziliga joylashtiring. Toʻliq diplom modeli
-uchun (433 MB, taxminan 1,5 GB RAM):
+Ob-havo modeli birinchi ishga tushirishda Hugging Facedan yuklab olinadi (40 MB), ixcham model esa
+birinchi marta tanlanganda (114 MB). Lokal nusxalardan foydalanish uchun ularni `models/` ga
+joylashtiring. Toʻliq diplom modeli uchun (433 MB, taxminan 1,5 GB RAM) u yerga `model_pipeline_main.pkl`
+ni qoʻying yoki u oʻzi yuklab olinsin:
 
 ```bash
 set MODEL_VARIANT=full          # Windows   |   Linux/macOS da: export MODEL_VARIANT=full
@@ -278,14 +341,14 @@ EDA va oʻqitish jarayoni `notebooks/01_EDA_and_Training.ipynb` da bayon qilinga
 flight_delay_service/
 ├── src/
 │   ├── app.py                 Streamlit interfeysi
-│   ├── analytics.py           xavf indeksi, nisbiy xavf, SHAP tushuntirishlari
+│   ├── analytics.py           kalibrlash, xavf darajalari, nisbiy xavf, SHAP tushuntirishlari
 │   ├── feature_engineering.py FlightFeatureEngineer (pickle qilingan pipelinening qismi)
-│   ├── model_loader.py        lokal fayl yoki Hugging Face Hubdan yuklash
+│   ├── model_loader.py        model variantlari, ob-havo kirishlari, lokal fayl yoki Hubdan yuklash
 │   ├── train_final.py         oʻqitish skripti, toʻliq model (diplom asosi)
 │   ├── train_compact.py       oʻqitish skripti, ixcham model (jonli demo)
 │   └── i18n/                  en.py, uz.py, ru.py + tilni aniqlash
 ├── data/                      airlines.csv, airports.csv (flights.csv yuklab olinadi, repoda yoʻq)
-├── models/                    lookup_data.joblib (+ yuklab olinadigan model_pipeline_compact.pkl / _main.pkl)
+├── models/                    lookup_data.joblib, calibration_weather.json (+ yuklab olinadigan model pickle fayllari)
 ├── reports/figures/           PR egri chizigʻi, omillar ahamiyati, xatolar matritsalari
 ├── reports/metrics/           oʻqitishdan olingan xom koʻrsatkich hisobotlari
 ├── notebooks/                 01_EDA_and_Training.ipynb, archive/ — tajribalar
@@ -297,12 +360,13 @@ flight_delay_service/
 
 ## Cheklovlar va rejalar
 
-* **Model hajmi.** Toʻliq modelga taxminan 1,5 GB RAM kerak, shuning uchun ommaviy demo ixcham variantda
-  ishlaydi (0,6 GB, −0,007 ROC-AUC, qarang: [Modelning ikki varianti](#modelning-ikki-varianti)). Undan
-  kichik konfiguratsiyalar sifatni sezilarli yoʻqotadi; yanada kichraytirish uchun CatBoost sozlamalari emas,
-  boshqa omillar kerak boʻladi.
-* **Xavf indeksi kalibrlash emas.** Asosiy koʻrsatiladigan raqam — xom ehtimol; indeks shkalasi
-  faqat vizual oʻzgartirish. Toʻlaqonli `CalibratedClassifierCV` bosqichi rejalarda.
+* **Yangi sanalar qiyinroq.** Diplom modellari tasodifiy reyslarda 0.78, lekin koʻrmagan sanalarida
+  0.63–0.64 beradi; ob-havo modeli yashirin kunlarda 0.698 ga yetadi, kuzatilgan ob-havo oʻrniga haqiqiy
+  prognoz bilan esa natija bundan ham past. Qarang: [Model variantlari](#model-variantlari).
+* **Model hajmi.** Toʻliq modelga taxminan 1,5 GB RAM kerak, shuning uchun ommaviy demo ob-havo modeli
+  va ixcham diplom modelini taklif qiladi (0,4 + 0,6 GB).
+* **Kalibrlash.** Faqat ob-havo modeli kalibrlangan. Diplom modellari sinf vazni tufayli oshirilgan xom
+  ehtimolni koʻrsatadi; xavf indeksi shkalasi faqat vizual oʻzgartirish.
 * **Faqat 2015-yil AQSH maʼlumotlari.** Aeroportlar, aviakompaniyalar va trafik 2015-yilga tegishli;
   ilova metodni namoyish qiladi, operatsion vosita emas.
 * **Trafik omillariga maʼlum sanalar kerak.** `traffic_density` va `AIRLINE_FLIGHT_COUNT` tanlangan
@@ -313,5 +377,6 @@ flight_delay_service/
 
 * `docs/Report.pdf` — diplom ishi hisoboti, `docs/Tech_report.pdf` — texnik hisobot (ikkalasi rus tilida).
 * Model kartasi: https://huggingface.co/AskarT/flight-delay-catboost
+* Koʻrsatkich hisobotlari: `reports/metrics/` (`weather_model_results.txt`, `compact_model_results.txt`, ...).
 
 **Askar Turanazarov** — Data Science boʻyicha diplom loyihasi, 2026. [MIT litsenziyasi](LICENSE) ostida tarqatiladi.

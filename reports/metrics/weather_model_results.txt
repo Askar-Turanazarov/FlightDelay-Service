@@ -1,0 +1,44 @@
+WEATHER MODEL REPORT (flight + weather, max_ctr_complexity=2)
+--------------------------------------------------
+PIPELINE: FlightFeatureEngineer + CatBoostClassifier (2500 trees, depth 7, scale_pos_weight=4.2)
+TRAINING DATA: 2015, 292 days (all flights of 2015 except 73 whole days held out)
+WEATHER: hourly METAR, Iowa Environmental Mesonet (IEM ASOS); worst conditions of the hour;
+         origin at the departure hour, destination at the arrival hour
+TARGET: arrival more than 15 minutes late
+PKL SIZE: 39.6 MB (model_pipeline_weather.pkl)
+--------------------------------------------------
+TEST: 73 hidden days, 1,116,989 flights, delay share 0.1794
+ROC-AUC SCORE: 0.6984
+PR-AUC SCORE: 0.3676
+ROC-AUC ON TRAINING DATA: 0.7683
+--------------------------------------------------
+CALIBRATION (isotonic, models/calibration_weather.json):
+raw mean probability 0.4127 against delay share 0.1794
+ECE raw / calibrated: 0.2334 / 0.0115   Brier calibrated: 0.1347
+(calibrated figures: fitted on half of the days, judged on the other half, ten splits;
+ the shipped calibrator is fitted on all 73 days)
+--------------------------------------------------
+DECISION THRESHOLD: calibrated probability >= 0.20
+(right if a missed delay costs about four false alarms)
+Recall 0.5447 (sd 0.0281 over splits) | Precision 0.3090 | Flights flagged 31.96%
+--------------------------------------------------
+RISK BANDS (calibrated probability):
+Band       | From  | To    | Flights | Delayed in fact
+low        | 0.00  | 0.12  | 35.8%   | 8.3%
+moderate   | 0.12  | 0.20  | 32.1%   | 16.1%
+high       | 0.20  | 0.35  | 24.9%   | 25.4%
+critical   | 0.35  | 1.00  | 7.2%    | 48.5%
+--------------------------------------------------
+COMPARISON ON NEW DATES (ROC-AUC):
+same setup without weather, 73 hidden days       0.6588
+weather, max_ctr_complexity=3, 73 hidden days     0.6988
+weather, max_ctr_complexity=2 (this model)        0.6984
+diploma full model, June-December                 0.6304
+diploma compact model, June-December              0.6370
+(the diploma models score 0.786 / 0.779 on a random 20 % of January-May flights,
+ dates they had already seen in training)
+--------------------------------------------------
+RUNTIME (Python 3.12, catboost 1.2.8, Windows):
+load 4.4 s | resident 0.43 GB | peak while loading 0.55 GB
+both demo models in one Streamlit process: 0.84 GB resident, 1.17 GB peak
+Training used observed weather; the app takes a forecast, so the scores above are an upper limit.
