@@ -22,7 +22,8 @@ if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
 from src.analytics import FlightAnalytics            # noqa: E402
-from src.model_loader import resolve_model_path, model_variant  # noqa: E402
+from src.model_loader import (WEATHER_VALUES, available_variants, default_variant,  # noqa: E402
+                              load_calibration, resolve_model_path, uses_weather)
 from src.i18n import LANGS, SESSION_KEY, t, detect_language  # noqa: E402
 
 LOOKUP_PATH = os.path.join(BASE_DIR, "models", "lookup_data.joblib")
@@ -30,13 +31,21 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 LOGOS_DIR = os.path.join(BASE_DIR, "logos")
 FIGURES_DIR = os.path.join(BASE_DIR, "reports", "figures")
 DATA_YEAR = 2015  # the dataset covers US flights of 2015
-MODEL_VARIANT = model_variant()  # "compact" (default, public demo) or "full" (diploma reference)
+MODEL_KEY = "model"  # session state key and URL parameter (?model=weather|compact|full)
 
-# Test-set metrics of both variants (same 20 % hold-out). Source of truth: reports/metrics/
-# model_results.txt + recall085_results.txt (full) and compact_model_results.txt (compact).
+# Metrics of the three variants. Each comes from its own test, so rows compare with care: the diploma models
+# were checked on a random 20 % of flights from dates they had seen in training (test="random"), the weather
+# model on 73 whole days it never saw (test="days"); auc_new is the comparable row. Sources of truth:
+# reports/metrics/model_results.txt + recall085_results.txt (full), compact_model_results.txt (compact),
+# weather_model_results.txt (weather, plus auc_new of the diploma models).
 MODEL_METRICS = {
-    "full":    dict(auc="0.786", recall="0.82", precision="0.31", size="433 MB", ram="1.5 GB", ctr="4", script="train_final.py"),
-    "compact": dict(auc="0.779", recall="0.82", precision="0.30", size="114 MB", ram="0.6 GB", ctr="3", script="train_compact.py"),
+    "weather": dict(test="days", auc="0.698", auc_new="0.698", thr="0.20", recall="0.54", precision="0.31",
+                    size="40 MB", ram="0.4 GB", ctr="2", script="—",
+                    band_delay=(0.083, 0.161, 0.254, 0.485)),  # actual delay share per risk band, 73 hidden days
+    "compact": dict(test="random", auc="0.779", auc_new="0.637", thr="0.37", recall="0.82", precision="0.30",
+                    size="114 MB", ram="0.6 GB", ctr="3", script="train_compact.py"),
+    "full":    dict(test="random", auc="0.786", auc_new="0.630", thr="0.37", recall="0.82", precision="0.31",
+                    size="433 MB", ram="1.5 GB", ctr="4", script="train_final.py"),
 }
 
 AUTHOR = "Askar Turanazarov"
@@ -127,15 +136,15 @@ def calculate_economic_impact(prob, distance_miles):
     }
 
 
-def get_risk_level(prob):
-    """Risk bucket by raw probability (base delay rate 18.9 %, decision threshold 0.37)."""
-    if prob < 0.2:
-        return t("risk.low"), THEME["risk"]["low"]
-    if prob < 0.37:
-        return t("risk.moderate"), THEME["risk"]["moderate"]
-    if prob < 0.55:
-        return t("risk.high"), THEME["risk"]["high"]
-    return t("risk.critical"), THEME["risk"]["critical"]
+RISK_LEVELS = ("low", "moderate", "high", "critical")
+
+
+def get_risk_level(band: int):
+    """Label and colour of a risk band (0..3). The band edges belong to the model (FlightAnalytics.bands):
+    0.20 / 0.37 / 0.55 on the raw probability of the diploma models, 0.12 / 0.20 / 0.35 on the calibrated
+    probability of the weather model. The high band starts at each model's decision threshold."""
+    level = RISK_LEVELS[band]
+    return t(f"risk.{level}"), THEME["risk"][level]
 
 
 @st.cache_data(show_spinner=False)
@@ -168,9 +177,7 @@ def feature_label(name: str) -> str:
 # --- resources ---------------------------------------------------------------
 
 @st.cache_resource(show_spinner=False)
-def load_all():
-    # Local models/<variant>.pkl if present, otherwise downloaded from Hugging Face Hub
-    model = joblib.load(resolve_model_path())
+def load_reference():
     data = joblib.load(LOOKUP_PATH)
     try:
         air_df = pd.read_csv(os.path.join(DATA_DIR, "airports.csv"))
@@ -178,18 +185,33 @@ def load_all():
         line_names = pd.read_csv(os.path.join(DATA_DIR, "airlines.csv")).set_index("IATA_CODE")["AIRLINE"].to_dict()
     except Exception:
         air_info, line_names = {}, {}
-    return model, data, air_info, line_names
+    return data, air_info, line_names
 
 
-with st.spinner(t("model.loading")):
-    model, data, air_info, line_names = load_all()
+@st.cache_resource(show_spinner=False)
+def load_model(variant: str):
+    """One cache entry per variant, shared by every visitor of this server process: a variant is loaded the
+    first time anyone picks it (local models/<file>.pkl, otherwise a download from the Hugging Face Hub) and
+    stays in memory, so later switches are instant. Both demo variants together take about 0.8 GB."""
+    return joblib.load(resolve_model_path(variant)), load_calibration(variant)
 
-analytics = FlightAnalytics(model)
+
+data, air_info, line_names = load_reference()
+
+# Model: from the URL (?model=...) on the first visit, then driven by the sidebar selector.
+OFFERED = available_variants()
+if st.session_state.get(MODEL_KEY) not in OFFERED:
+    asked = st.query_params.get(MODEL_KEY, "")
+    st.session_state[MODEL_KEY] = asked if asked in OFFERED else default_variant()
 
 # --- sidebar -----------------------------------------------------------------
 
 with st.sidebar:
     st.selectbox(f":material/language: {t('sidebar.language')}", options=list(LANGS), format_func=LANGS.get, key=SESSION_KEY)
+    st.selectbox(t("sidebar.model"), OFFERED, format_func=lambda v: t(f"model.name.{v}"), key=MODEL_KEY)
+    variant = st.session_state[MODEL_KEY]
+    st.query_params[MODEL_KEY] = variant
+    st.caption(t(f"model.caption.{variant}"))
     st.header(t("sidebar.header"))
 
     unknown = t("sidebar.unknown")
@@ -213,6 +235,21 @@ with st.sidebar:
     day = st.slider(t("sidebar.day"), 1, days_in_month, min(15, days_in_month))
     dep_hour = st.slider(t("sidebar.dep_hour"), 0, 23, 12)
 
+    # Weather at both ends of the route, only for the model that was trained on it. The widget keys
+    # do not depend on the airports, so the choice survives a change of route or a model switch.
+    weather = {}
+    if uses_weather(variant):
+        st.divider()
+        st.subheader(t("weather.header"))
+        st.caption(t("weather.hint"))
+        for tab, end in zip(st.tabs([f"🛫 {origin_code}", f"🛬 {dest_code}"]), ("ORIGIN", "DEST")):
+            with tab:
+                for kind, values in WEATHER_VALUES.items():
+                    weather[f"{end}_{kind}"] = st.selectbox(
+                        t(f"weather.{kind}"), values, key=f"weather_{end}_{kind}",
+                        format_func=lambda v, k=kind: t(f"weather.{k}.{v}"),
+                    )
+
     st.divider()
     links = [f"[GitHub]({GITHUB_URL})", f"[Hugging Face]({HF_URL})"]
     if PORTFOLIO_URL:
@@ -222,6 +259,14 @@ with st.sidebar:
 # --- main --------------------------------------------------------------------
 
 st.title(t("app.title"))
+
+try:
+    with st.spinner(t("model.loading", name=t(f"model.name.{variant}"))):
+        model, calibration = load_model(variant)
+except Exception as error:  # Hub unreachable or rate-limited: say so instead of a stack trace
+    st.error(t("model.failed", name=t(f"model.name.{variant}"), error=type(error).__name__))
+    st.stop()
+analytics = FlightAnalytics(model, calibration)
 tab1, tab2 = st.tabs([t("tab.analysis"), t("tab.model")])
 
 with tab1:
@@ -311,30 +356,37 @@ with tab1:
                 "SCHEDULED_ARRIVAL": (arr_minutes // 60) * 100 + arr_minutes % 60,
                 "DEP_HOUR": dep_hour, "ARR_HOUR": arr_minutes // 60,
                 "IS_WEEKEND": int(day_of_week in (6, 7)),
+                **weather,  # eight weather columns after the flight columns, the order the weather model expects
             }])
 
-            # 2. Raw probability from CatBoost: the primary number, drives the verdict and the economics
-            prob = float(model.predict_proba(input_df)[0][1])
+            # 2. Delay probability: calibrated for the weather model, raw for the diploma models.
+            #    It drives the verdict and the economics.
+            prob = analytics.probability(input_df)
             delay_predicted = analytics.is_delay_predicted(prob)
 
             # 3. Risk index: visual stretch for the bar only (not a calibration)
             risk_idx = analytics.risk_index(prob)
 
-            # 4. Comparison with the base delay rate of the data (18.9 %)
+            # 4. Comparison with the base delay rate of the model's data
             ratio, rel_status = analytics.relative_risk(prob)
 
-            # 5. Economics from the raw probability
+            # 5. Economics from the same probability
             impact = calculate_economic_impact(prob, route["DISTANCE"])
 
             # --- results ---
-            risk_label, color = get_risk_level(prob)
+            band = analytics.risk_band(prob)
+            risk_label, color = get_risk_level(band)
             st.markdown(f"### {t('risk.level')}: <span style='color:{color}'>{risk_label}</span>",
                         unsafe_allow_html=True)
+            band_delay = MODEL_METRICS[variant].get("band_delay")
+            if band_delay:
+                st.caption(t("risk.band_fact", share=f"{band_delay[band]:.0%}"))
             st.progress(risk_idx, text=t("risk.index_bar", idx=f"{risk_idx:.0%}"))
 
             col_p1, col_p2 = st.columns(2)
             col_p1.metric(t("metric.prob"), f"{prob:.1%}",
-                          help=t("metric.prob_help", thr=f"{analytics.threshold:.2f}"))
+                          help=t("metric.prob_help_cal" if analytics.calibrated else "metric.prob_help",
+                                 thr=f"{analytics.threshold:.2f}"))
             col_p2.metric(t("metric.rel", base=f"{analytics.base_rate:.1%}"), f"{ratio:.1f}×",
                           help=t(f"rel.{rel_status}"))
 
@@ -385,20 +437,40 @@ with tab1:
                 st.caption(t("shap.caption"))
 
 with tab2:
+    current = MODEL_METRICS[variant]
     st.header(t("metrics.header"))
-    current = MODEL_METRICS[MODEL_VARIANT]
-    st.caption(t(f"metrics.loaded.{MODEL_VARIANT}", size=current["size"]))
+    st.caption(t(f"metrics.loaded.{variant}", size=current["size"]))
     m1, m2 = st.columns(2)
-    m1.info(t("metrics.auc", auc=current["auc"]))
-    m2.info(t("metrics.recall", recall=current["recall"], precision=current["precision"]))
+    m1.info(t(f"metrics.auc.{current['test']}", auc=current["auc"]))
+    m2.info(t("metrics.recall", thr=current["thr"], recall=current["recall"], precision=current["precision"]))
+
+    st.subheader(t("metrics.weather_header"))
+    st.markdown(t("metrics.weather_text"))
 
     st.subheader(t("metrics.variants_header"))
     st.markdown(t("metrics.variants_text"))
-    rows = [("auc", "row_auc"), ("recall", "row_recall"), ("precision", "row_precision"), ("size", "row_size"),
-            ("ram", "row_ram"), ("ctr", "row_ctr"), ("script", "row_script")]
-    table = [f'| {t("metrics.col_metric")} | {t("metrics.col_full")} | {t("metrics.col_compact")} |', "|---|---|---|"]
+    columns = ("weather", "compact", "full")
+    words = {  # rows whose cells are words rather than numbers
+        "features": ("features_weather", "features_flight", "features_flight"),
+        "train": ("train_weather", "train_diploma", "train_diploma"),
+        "test": ("test_days", "test_random", "test_random"),
+        "prob": ("prob_cal", "prob_raw", "prob_raw"),
+    }
+    rows = [("features", "row_features"), ("train", "row_train"), ("test", "row_test"), ("auc", "row_auc"),
+            ("auc_new", "row_auc_new"), ("prob", "row_prob"), ("thr", "row_threshold"), ("recall", "row_recall"),
+            ("precision", "row_precision"), ("size", "row_size"), ("ram", "row_ram"), ("ctr", "row_ctr"),
+            ("script", "row_script")]
+    table = ["| " + " | ".join([t("metrics.col_metric")] + [t(f"metrics.col_{c}") for c in columns]) + " |",
+             "|---|---|---|---|"]
     for key, label in rows:
-        table.append(f'| {t(f"metrics.{label}")} | {MODEL_METRICS["full"][key]} | {MODEL_METRICS["compact"][key]} |')
+        if key in words:
+            cells = [t(f"metrics.val.{v}") for v in words[key]]
+        elif key == "auc_new":
+            cells = [t("metrics.val.auc_days", auc=MODEL_METRICS["weather"]["auc_new"])] + \
+                    [t("metrics.val.auc_months", auc=MODEL_METRICS[c]["auc_new"]) for c in columns[1:]]
+        else:
+            cells = [MODEL_METRICS[c][key] for c in columns]
+        table.append(f"| {t(f'metrics.{label}')} | " + " | ".join(cells) + " |")
     st.markdown("\n".join(table))
 
     st.caption(t("metrics.figures_note"))

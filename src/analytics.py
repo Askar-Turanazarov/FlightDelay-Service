@@ -2,11 +2,13 @@
 
 # src/analytics.py
 # Post-processing of CatBoost predictions for the UI:
-#   * risk_index     - non-linear stretch of the raw probability for the visual gauge. It is a
-#                      display transform, NOT a probability calibration: decisions and money are
-#                      always computed from the raw model probability.
-#   * relative_risk  - raw probability compared with the dataset base rate (18.9 % of flights in
-#                      the 2015 data arrived more than 15 minutes late).
+#   * probability    - the number the UI works with. The weather model maps its raw output through its
+#                      isotonic calibration (the raw output is inflated by scale_pos_weight); the diploma
+#                      models keep their raw probability, as in the diploma.
+#   * risk_index     - non-linear stretch of that probability for the visual gauge. It is a display
+#                      transform only: decisions and money use the probability itself.
+#   * relative_risk  - the probability compared with the base delay rate of the model's data
+#                      (18.9 % for the diploma models, 17.9 % for the whole of 2015).
 #   * get_local_shap - per-flight SHAP contributions via CatBoost's built-in ShapValues.
 
 import numpy as np
@@ -15,15 +17,36 @@ import catboost as cb
 
 BASE_DELAY_RATE = 0.189      # share of delayed flights in the training data
 DECISION_THRESHOLD = 0.37    # chosen on the precision-recall curve for Recall ~ 0.82
+RISK_BANDS = (0.2, 0.37, 0.55)  # upper edges of low / moderate / high; critical above
 
 
 class FlightAnalytics:
     """Helpers that turn a fitted pipeline (FlightFeatureEngineer + CatBoost) into UI-ready numbers."""
 
-    def __init__(self, model, base_rate=BASE_DELAY_RATE, threshold=DECISION_THRESHOLD):
+    def __init__(self, model, calibration=None):
+        """`calibration` is the variant's JSON ({'x', 'y', 'threshold', 'bands', 'base_rate'}) or None for
+        the diploma models, which keep the raw probability, threshold 0.37 and their original bands."""
         self.model = model
-        self.base_rate = base_rate
-        self.threshold = threshold
+        self.calibration = calibration
+        cal = calibration or {}
+        self.base_rate = cal.get("base_rate", BASE_DELAY_RATE)
+        self.threshold = cal.get("threshold", DECISION_THRESHOLD)
+        self.bands = tuple(cal.get("bands", RISK_BANDS))
+
+    @property
+    def calibrated(self) -> bool:
+        return self.calibration is not None
+
+    def probability(self, input_df: pd.DataFrame) -> float:
+        """Delay probability of one flight: calibrated when the variant has a calibration, raw otherwise."""
+        raw = float(self.model.predict_proba(input_df)[0][1])
+        if self.calibration is None:
+            return raw
+        return float(np.interp(raw, self.calibration["x"], self.calibration["y"]))
+
+    def risk_band(self, prob: float) -> int:
+        """0 = low, 1 = moderate, 2 = high, 3 = critical, by the variant's band edges."""
+        return int(np.searchsorted(self.bands, prob, side="right"))
 
     # ---------- probability-derived numbers ----------
 
@@ -49,7 +72,7 @@ class FlightAnalytics:
 
     def relative_risk(self, prob: float):
         """
-        Compare the raw probability with the dataset base rate.
+        Compare the probability with the base delay rate of the model's data.
 
         Returns (ratio, status) where ratio = prob / base_rate and status is one of
         'lower' (< 0.8x), 'typical' (0.8x-1.25x) or 'higher' (> 1.25x).
