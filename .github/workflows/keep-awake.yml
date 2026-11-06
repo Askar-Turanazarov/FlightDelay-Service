@@ -2,7 +2,8 @@ name: Keep demo awake
 
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    # every 3 h: GitHub delays or skips scheduled runs, and the demo sleeps after 12 h without visitors
+    - cron: "17 */3 * * *"
   workflow_dispatch:
 
 permissions:
