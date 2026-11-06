@@ -6,6 +6,7 @@ WEATHER: hourly METAR, Iowa Environmental Mesonet (IEM ASOS); worst conditions o
          origin at the departure hour, destination at the arrival hour
 TARGET: arrival more than 15 minutes late
 PKL SIZE: 39.6 MB (model_pipeline_weather.pkl)
+SCRIPTS: training/weather/ (steps in its README.md)
 --------------------------------------------------
 TEST: 73 hidden days, 1,116,989 flights, delay share 0.1794
 ROC-AUC SCORE: 0.6984

@@ -26,7 +26,8 @@ hf download AskarT/flight-delay-catboost model_pipeline_main.pkl --local-dir mod
 ```
 
 The weather model outputs a raw probability inflated by the class weight; the app maps it through
-`calibration_weather.json` (`np.interp(raw, x, y)`). Its metrics: `reports/metrics/weather_model_results.txt`.
+`calibration_weather.json` (`np.interp(raw, x, y)`). Its metrics: `reports/metrics/weather_model_results.txt`;
+how it was built: `training/weather/README.md`.
 Why the diploma has two variants: the full model needs about 1.5 GB of RAM and does not fit the free
 hosting of the demo; the compact one (0.6 GB) costs 0.007 ROC-AUC. Details:
 `reports/metrics/compact_experiments.txt`, `reports/metrics/compact_model_results.txt`.

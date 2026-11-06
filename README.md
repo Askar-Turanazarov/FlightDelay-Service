@@ -191,7 +191,7 @@ critical ≥ 0.35; on the 73 test days 8 %, 16 %, 25 % and 48 % of the flights i
 
 **Limits.** It learned from the weather that actually happened, while the app takes a forecast, so
 in real use the score is below 0.698. Full report: `reports/metrics/weather_model_results.txt`.
-The training scripts of this model are not in this repository yet.
+Training scripts and the steps to rebuild it: [`training/weather/`](training/weather/README.md).
 
 ### Compact diploma model
 
@@ -326,6 +326,8 @@ python src/train_compact.py        # compact model-> models/model_pipeline_compa
 Both scripts use the same loader, split and parameters; set `task_type="CPU"` inside them to train
 without a GPU (much slower). The compact script also writes `reports/metrics/compact_model_results.txt`.
 
+The weather model has its own six steps (weather download, dataset, training, calibration): [`training/weather/`](training/weather/README.md).
+
 EDA and the training story live in `notebooks/01_EDA_and_Training.ipynb`.
 
 ## Project structure
@@ -344,6 +346,7 @@ flight_delay_service/
 ├── models/                    lookup_data.joblib, calibration_weather.json (+ model pickles, downloaded)
 ├── reports/figures/           PR curve, feature importance, confusion matrices
 ├── reports/metrics/           raw metric reports from training
+├── training/weather/          weather model: METAR download, dataset, training, calibration
 ├── notebooks/                 01_EDA_and_Training.ipynb, archive/ with experiments
 ├── docs/                      Report.pdf, Tech_report.pdf (Russian), img/{en,uz,ru}/ screenshots
 ├── space/                     static Hugging Face Space page (embeds the live demo)

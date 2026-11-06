@@ -51,6 +51,7 @@ models/*
 !models/lookup_data.joblib
 !models/calibration_weather.json
 !models/README.md
+training/weather/work/
 
 # ---------- OS / misc ----------
 *.log

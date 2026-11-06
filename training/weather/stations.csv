@@ -1,0 +1,323 @@
+iata,state,station,tz,how,km,station_name
+ABE,PA,ABE,America/New_York,same code,0.8,ALLENTOWN-BETHLEHEM
+ABI,TX,ABI,America/Chicago,same code,0.1,Abilene
+ABQ,NM,ABQ,America/Denver,same code,0.6,ALBUQUERQUE INTL
+ABR,SD,ABR,America/Chicago,same code,0.2,ABERDEEN
+ABY,GA,ABY,America/New_York,same code,0.0,ALBANY MUNICIPAL
+ACK,MA,ACK,America/New_York,same code,0.0,NANTUCKET MEMORIAL
+ACT,TX,ACT,America/Chicago,same code,0.8,Waco
+ACV,CA,ACV,America/Los_Angeles,same code,0.0,ARCATA/EUREKA ARPT
+ACY,NJ,ACY,America/New_York,same code,0.0,ATLANTIC CITY INTL
+ADK,AK,PADK,America/Adak,nearest,0.0,ADAK NAS/MITCHELL
+ADQ,AK,PADQ,America/Anchorage,nearest,0.0,KODIAK (ASOS)
+AEX,LA,AEX,America/Chicago,same code,1.3,ALEXANDRIA INTL/ENGLAND AFB
+AGS,GA,AGS,America/New_York,same code,0.0,AUGUSTA/BUSH FIELD
+AKN,AK,PAKN,America/Anchorage,nearest,0.8,KING SALMON (ASOS)
+ALB,NY,ALB,America/New_York,same code,1.1,ALBANY COUNTY ARPT
+ALO,IA,ALO,America/Chicago,same code,0.3,Waterloo
+AMA,TX,AMA,America/Chicago,same code,0.0,Amarillo - Rick Husband Intl
+ANC,AK,PANC,America/Anchorage,nearest,1.7,ANCHORAGE INTL ARPT (ASOS)
+APN,MI,APN,America/Detroit,same code,0.8,Alpena
+ASE,CO,ASE,America/Denver,same code,0.0,ASPEN/SARDY FIELD
+ATL,GA,ATL,America/New_York,same code,1.8,ATLANTA INTL ARPT
+ATW,WI,ATW,America/Chicago,same code,0.1,APPLETON/OUTAGAM
+AUS,TX,AUS,America/Chicago,same code,1.6,Austin Bergstrom Intl
+AVL,NC,AVL,America/New_York,same code,0.6,ASHEVILLE_MUNICIPAL_(ASOS)
+AVP,PA,AVP,America/New_York,same code,0.5,Wilkes-Barre/Scranton
+AZO,MI,AZO,America/Detroit,same code,0.0,KALAMAZOO
+BDL,CT,BDL,America/New_York,same code,0.1,HARTFORD/BRADLEY
+BET,AK,PABE,America/Anchorage,nearest,0.9,BETHEL AIRPORT (ASOS)
+BFL,CA,BFL,America/Los_Angeles,same code,0.2,BAKERSFIELD/MEADOWS
+BGM,NY,BGM,America/New_York,same code,0.0,BINGHAMTON/BROOME
+BGR,ME,BGR,America/New_York,same code,0.0,BANGOR INTL ARPT
+BHM,AL,BHM,America/Chicago,same code,0.9,BIRMINGHAM MUNI
+BIL,MT,BIL,America/Denver,same code,0.1,BILLINGS/LOGAN INTL
+BIS,ND,BIS,America/Chicago,same code,0.2,BISMARCK
+BJI,MN,BJI,America/Chicago,same code,0.0,BEMIDJI
+BLI,WA,BLI,America/Los_Angeles,same code,0.0,BELLINGHAM INTL
+BMI,IL,BMI,America/Chicago,same code,0.1,BLOOMINGTON/NORM
+BNA,TN,BNA,America/Chicago,same code,1.2,NASHVILLE METRO
+BOI,ID,BOI,America/Boise,same code,1.5,BOISE MUNICIPAL
+BOS,MA,BOS,America/New_York,same code,0.6,BOSTON/LOGAN INTL
+BPT,TX,BPT,America/Chicago,same code,0.5,Beaumont - Port Arthur
+BQK,GA,BQK,America/New_York,same code,0.0,BRUNSWICK/GLYNCO
+BQN,PR,TJBQ,America/Puerto_Rico,nearest,0.0,Aguadilla
+BRD,MN,BRD,America/Chicago,same code,0.9,BRAINERD
+BRO,TX,BRO,America/Chicago,same code,0.9,BROWNSVILLE INTL
+BRW,AK,PABR,America/Anchorage,nearest,1.0,BARROW/POST-ROGERS (ASOS)
+BTM,MT,BTM,America/Denver,same code,0.0,BUTTE/BERT MOONEY
+BTR,LA,BTR,America/Chicago,same code,0.5,BATON ROUGE/RYAN
+BTV,VT,BTV,America/New_York,same code,0.3,BURLINGTON INTL
+BUF,NY,BUF,America/New_York,same code,0.3,BUFFALO INTL ARPT
+BUR,CA,BUR,America/Los_Angeles,same code,0.0,BURBANK/GLENDALE
+BWI,MD,BWI,America/New_York,same code,1.4,Baltimore - Wash Intl
+BZN,MT,BZN,America/Denver,same code,1.4,BOZEMAN/GALLATIN
+CAE,SC,CAE,America/New_York,same code,0.4,COLUMBIA METRO
+CAK,OH,CAK,America/New_York,same code,0.0,Akron / Canton
+CDC,UT,CDC,America/Denver,same code,0.2,CEDAR CITY MUNI
+CDV,AK,PACV,America/Anchorage,nearest,1.5,CORDOVA/MILE 13
+CEC,CA,CEC,America/Los_Angeles,same code,0.4,Crescent City
+CHA,TN,CHA,America/New_York,same code,0.0,CHATTANOOGA/LOVELL
+CHO,VA,CHO,America/New_York,same code,0.0,CHARLOTTESVILLE
+CHS,SC,CHS,America/New_York,same code,0.0,Charleston
+CID,IA,CID,America/Chicago,same code,1.2,CEDAR RAPIDS
+CIU,MI,CIU,America/Detroit,same code,0.2,CHIPPEWA INTL
+CLD,CA,CRQ,America/Los_Angeles,nearest,0.3,CARLSBAD/PALOMAR
+CLE,OH,CLE,America/New_York,same code,0.6,Cleveland
+CLL,TX,CLL,America/Chicago,same code,0.1,COLLEGE STATION
+CLT,NC,CLT,America/New_York,same code,1.4,Charlotte / Douglas
+CMH,OH,CMH,America/New_York,same code,1.2,COLUMBUS
+CMI,IL,CMI,America/Chicago,same code,0.8,Champaign - Willard
+CMX,MI,CMX,America/Detroit,same code,0.0,HANCOCK
+CNY,UT,CNY,America/Denver,same code,0.0,MOAB/CANYONLANDS
+COD,WY,COD,America/Denver,same code,0.0,CODY MUNI (AWOS)
+COS,CO,COS,America/Denver,same code,0.0,COLORADO SPRINGS
+COU,MO,COU,America/Chicago,same code,0.2,COLUMBIA
+CPR,WY,CPR,America/Denver,same code,0.0,CASPER/NATRONA INTL
+CRP,TX,CRP,America/Chicago,same code,1.2,CORPUS CHRISTI INTL
+CRW,WV,CRW,America/New_York,same code,0.7,CHARLESTON/KANAWHA
+CSG,GA,CSG,America/New_York,same code,0.3,COLUMBUS METRO ARPT
+CVG,KY,CVG,America/New_York,same code,0.9,Cincinnati / N Kentucky Intl
+CWA,WI,CWA,America/Chicago,same code,0.0,MOSINEE/CENTRAL
+DAB,FL,DAB,America/New_York,same code,0.0,DAYTONA BEACH RGNL
+DAL,TX,DAL,America/Chicago,same code,0.0,DALLAS/LOVE FIELD
+DAY,OH,DAY,America/New_York,same code,0.4,DAYTON
+DBQ,IA,DBQ,America/Chicago,same code,0.5,DUBUQUE
+DCA,VA,DCA,America/New_York,same code,0.6,WASHINGTON/NATIONAL
+DEN,CO,DEN,America/Denver,same code,3.0,DENVER INTNL ARPT
+DFW,TX,DFW,America/Chicago,same code,0.1,DALLAS/FT WORTH
+DHN,AL,DHN,America/Chicago,same code,0.2,DOTHAN MUNICIPAL
+DIK,ND,DIK,America/Denver,same code,0.0,DICKINSON
+DLG,AK,PADL,America/Anchorage,nearest,0.1,Dillingham
+DLH,MN,DLH,America/Chicago,same code,0.0,DULUTH
+DRO,CO,DRO,America/Denver,same code,0.0,DURANGO/LA PLATA CO
+DSM,IA,DSM,America/Chicago,same code,0.6,Des Moines
+DTW,MI,DTW,America/Detroit,same code,2.5,DETROIT/WAYNE
+DVL,ND,DVL,America/Chicago,same code,0.1,DEVILS_LAKE
+EAU,WI,EAU,America/Chicago,same code,0.1,EAU CLAIRE
+ECP,FL,ECP,America/Chicago,same code,,Panama City
+EGE,CO,EGE,America/Denver,same code,0.0,EAGLE CO. REGIONAL
+EKO,NV,EKO,America/Los_Angeles,same code,0.5,ELKO
+ELM,NY,ELM,America/New_York,same code,0.7,Elmira / Corning
+ELP,TX,ELP,America/Denver,same code,0.5,EL PASO INTL ARPT
+ERI,PA,ERI,America/New_York,same code,0.4,ERIE INTL AIRPORT
+ESC,MI,ESC,America/Detroit,same code,0.0,ESCANABA
+EUG,OR,EUG,America/Los_Angeles,same code,0.6,EUGENE/MAHLON SWEET
+EVV,IN,EVV,America/Chicago,same code,1.1,EVANSVILLE
+EWN,NC,EWN,America/New_York,same code,0.7,NEW_BERN/CRAVEN_CO_(ASOS)
+EWR,NJ,EWR,America/New_York,same code,1.1,Newark Intl
+EYW,FL,EYW,America/New_York,same code,0.0,Key West
+FAI,AK,PAFA,America/Anchorage,nearest,1.3,FAIRBANKS INTL ARPT (ASOS)
+FAR,ND,FAR,America/Chicago,same code,0.7,FARGO
+FAT,CA,FAT,America/Los_Angeles,same code,0.4,FRESNO AIR TERMINAL
+FAY,NC,FAY,America/New_York,same code,0.0,Fayetteville
+FCA,MT,GPI,America/Denver,nearest,1.0,KALISPELL
+FLG,AZ,FLG,America/Phoenix,same code,0.2,Flagstaff - Pulliam
+FLL,FL,FLL,America/New_York,same code,1.2,Fort Lauderdale - Hollywood
+FNT,MI,FNT,America/Detroit,same code,0.5,FLINT
+FSD,SD,FSD,America/Chicago,same code,1.1,SIOUX FALLS
+FSM,AR,FSM,America/Chicago,same code,0.0,FORT SMITH MUNI
+FWA,IN,FWA,America/Indiana/Indianapolis,same code,1.2,Fort Wayne
+GCC,WY,GCC,America/Denver,same code,0.0,Gillette
+GCK,KS,GCK,America/Chicago,same code,0.0,GARDEN_CITY
+GEG,WA,GEG,America/Los_Angeles,same code,0.5,SPOKANE INTL ARPT
+GFK,ND,GFK,America/Chicago,same code,0.0,GRAND_FORKS
+GGG,TX,GGG,America/Chicago,same code,0.1,LONGVIEW/GREGG CO.
+GJT,CO,GJT,America/Denver,same code,1.7,GRAND JUNCTION
+GNV,FL,GNV,America/New_York,same code,0.4,GAINESVILLE RGNL
+GPT,MS,GPT,America/Chicago,same code,0.0,GULFPORT-BILOXI
+GRB,WI,GRB,America/Chicago,same code,0.8,Ashwaubenon
+GRI,NE,GRI,America/Chicago,same code,0.1,GRAND ISLAND
+GRK,TX,GRK,America/Chicago,same code,0.6,FORT HOOD/GRAY AAF
+GRR,MI,GRR,America/Detroit,same code,0.1,Grand Rapids
+GSO,NC,GSO,America/New_York,same code,0.6,GREENSBORO/PIEDMONT_(ASOS)
+GSP,SC,GSP,America/New_York,same code,1.3,Greenville - Spartanburg
+GST,AK,PAGS,America/Juneau,nearest,0.1,GUSTAVUS
+GTF,MT,GTF,America/Denver,same code,1.3,GREAT FALLS INTL
+GTR,MS,GTR,America/Chicago,same code,0.0,GOLDEN TRI(AWOS)
+GUC,CO,GUC,America/Denver,same code,0.0,GUNNISON CO. (AWOS)
+GUM,GU,PGUM,Pacific/Guam,manual,,
+HDN,CO,HDN,America/Denver,same code,0.2,HAYDEN/YAMPA (AWOS)
+HIB,MN,HIB,America/Chicago,same code,0.0,HIBBING
+HLN,MT,HLN,America/Denver,same code,1.5,HELENA REGIONAL
+HNL,HI,PHNL,Pacific/Honolulu,manual,,Honolulu Intl
+HOB,NM,HOB,America/Denver,same code,0.0,HOBBS/LEA CO.
+HOU,TX,HOU,America/Chicago,same code,0.9,HOUSTON/WILL HOBBY
+HPN,NY,HPN,America/New_York,same code,0.0,WHITE PLAINS
+HRL,TX,HRL,America/Chicago,same code,0.0,HARLINGEN INTL ARPT
+HSV,AL,HSV,America/Chicago,same code,1.2,HUNTSVILLE/MADISON
+HYA,MA,HYA,America/New_York,same code,0.1,HYANNIS/POLANDO FLD
+HYS,KS,HYS,America/Chicago,same code,0.3,HAYS_MUNI
+IAD,VA,IAD,America/New_York,same code,1.3,WASHINGTON/DULLES
+IAG,NY,IAG,America/New_York,same code,0.1,NIAGARA FALLS INTL
+IAH,TX,IAH,America/Chicago,same code,2.1,Houston Intercontinental
+ICT,KS,ICT,America/Chicago,same code,0.3,WICHITA
+IDA,ID,IDA,America/Boise,same code,0.1,IDAHO FALLS/FANNING
+ILG,DE,ILG,America/New_York,same code,0.8,WILMINGTON AIRPORT
+ILM,NC,ILM,America/New_York,same code,0.2,Wilmington Intl
+IMT,MI,IMT,America/Menominee,same code,0.0,IRON MOUNTAIN
+IND,IN,IND,America/Indiana/Indianapolis,same code,1.3,INDIANAPOLIS
+INL,MN,INL,America/Chicago,same code,0.9,International Falls
+ISN,ND,ISN,America/Chicago,same code,0.6,WILLISTON
+ISP,NY,ISP,America/New_York,same code,0.2,ISLIP/MACARTHUR
+ITH,NY,ITH,America/New_York,same code,0.0,Ithaca
+ITO,HI,PHTO,Pacific/Honolulu,nearest,0.0,HILO/LYMAN_FIELD_(ASOS)
+JAC,WY,JAC,America/Denver,same code,0.6,JACKSON HOLE (AWOS)
+JAN,MS,JAN,America/Chicago,same code,1.1,JACKSON/THOMPSON
+JAX,FL,JAX,America/New_York,same code,0.0,Jacksonville Intl
+JFK,NY,JFK,America/New_York,same code,1.4,NEW YORK/JF KENNEDY
+JLN,MO,JLN,America/Chicago,same code,0.3,Joplin
+JMS,ND,JMS,America/Chicago,same code,0.1,JAMESTOWN
+JNU,AK,PAJN,America/Juneau,nearest,0.0,JUNEAU INTL AIRPORT (ASOS)
+KOA,HI,PHKO,Pacific/Honolulu,nearest,0.0,KEAHOLE_POINT/KONA_(ASOS)
+KTN,AK,PAKT,America/Juneau,nearest,0.2,KETCHIKAN INTL ARPT (ASOS)
+LAN,MI,LAN,America/Detroit,same code,0.6,Lansing
+LAR,WY,LAR,America/Denver,same code,0.0,LARAMIE/GEN. BREES
+LAS,NV,LAS,America/Los_Angeles,same code,1.4,Las Vegas - Harry Reid Intl
+LAW,OK,LAW,America/Chicago,same code,0.0,LAWTON MUNICIPAL
+LAX,CA,LAX,America/Los_Angeles,same code,2.0,LOS ANGELES INTL
+LBB,TX,LBB,America/Chicago,same code,0.0,LUBBOCK INTL ARPT
+LBE,PA,LBE,America/New_York,same code,0.0,LATROBE/WESTMORLAND
+LCH,LA,LCH,America/Chicago,same code,0.4,Lake Charles
+LEX,KY,LEX,America/New_York,same code,0.4,LEXINGTON/BLUEGRASS
+LFT,LA,LFT,America/Chicago,same code,0.8,Lafayette
+LGA,NY,LGA,America/New_York,same code,0.7,New York/LaGuardia
+LGB,CA,LGB,America/Los_Angeles,same code,0.8,LONG BEACH AIRPORT
+LIH,HI,PHLI,Pacific/Honolulu,nearest,0.3,Lihue
+LIT,AR,LIT,America/Chicago,same code,1.1,LITTLE ROCK/ADAMS
+LNK,NE,LNK,America/Chicago,same code,2.2,Lincoln
+LRD,TX,LRD,America/Chicago,same code,0.0,LAREDO INTL AIRPORT
+LSE,WI,LSE,America/Chicago,same code,0.3,La Crosse
+LWS,ID,LWS,America/Los_Angeles,same code,0.0,Lewiston
+MAF,TX,MAF,America/Chicago,same code,0.7,Midland Intl
+MBS,MI,MBS,America/Detroit,same code,0.3,SAGINAW
+MCI,MO,MCI,America/Chicago,same code,0.0,KANSAS CITY/INTL
+MCO,FL,MCO,America/New_York,same code,0.7,Orlando International
+MDT,PA,MDT,America/New_York,same code,0.0,MIDDLETOWN/OLMSTED
+MDW,IL,MDW,America/Chicago,same code,0.0,CHICAGO
+MEI,MS,MEI,America/Chicago,same code,0.2,MERIDIAN/KEY FIELD
+MEM,TN,MEM,America/Chicago,same code,2.2,MEMPHIS INTL ARPT
+MFE,TX,MFE,America/Chicago,same code,0.0,MCALLEN/MILLER INTL
+MFR,OR,MFR,America/Los_Angeles,same code,0.8,MEDFORD/JACKSON CO.
+MGM,AL,MGM,America/Chicago,same code,0.0,MONTGOMERY/DANNELLY
+MHK,KS,MHK,America/Chicago,same code,0.9,MANHATTAN
+MHT,NH,MHT,America/New_York,same code,0.2,MANCHESTER AIRPARK
+MIA,FL,MIA,America/New_York,same code,2.7,MIAMI INTL AIRPORT
+MKE,WI,MKE,America/Chicago,same code,0.0,MILWAUKEE
+MKG,MI,MKG,America/Detroit,same code,0.2,Muskegon
+MLB,FL,MLB,America/New_York,same code,0.1,MELBOURNE REGIONAL
+MLI,IL,MLI,America/Chicago,same code,0.0,Moline
+MLU,LA,MLU,America/Chicago,same code,0.0,MONROE REGIONAL
+MMH,CA,MMH,America/Los_Angeles,same code,0.1,MAMMOTH/JUNE LAKES
+MOB,AL,MOB,America/Chicago,same code,0.4,MOBILE/BATES FIELD
+MOT,ND,MOT,America/Chicago,same code,0.0,MINOT_INTL
+MQT,MI,SAW,America/Detroit,nearest,0.0,GWINN/SAWYER AFB
+MRY,CA,MRY,America/Los_Angeles,same code,0.6,Monterey Peninsula
+MSN,WI,MSN,America/Chicago,same code,0.6,MADISON
+MSO,MT,MSO,America/Denver,same code,0.5,MISSOULA/BELL FIELD
+MSP,MN,MSP,America/Chicago,same code,1.3,MINNEAPOLIS
+MSY,LA,MSY,America/Chicago,same code,0.7,New Orleans - Louis Armstrong
+MTJ,CO,MTJ,America/Denver,same code,0.5,MONTROSE CO. ARPT
+MVY,MA,MVY,America/New_York,same code,0.1,MARTHAS VINEYARD
+MYR,SC,MYR,America/New_York,same code,0.2,MYRTLE BEACH(CIV)
+OAJ,NC,OAJ,America/New_York,same code,0.0,JACKSONVILLE_(AWOS)
+OAK,CA,OAK,America/Los_Angeles,same code,1.1,Oakland
+OGG,HI,PHOG,Pacific/Honolulu,nearest,1.2,Kahului
+OKC,OK,OKC,America/Chicago,same code,0.5,Oklahoma City
+OMA,NE,OMA,America/Chicago,same code,1.0,OMAHA/EPPLEY
+OME,AK,PAOM,America/Nome,nearest,0.0,NOME (ASOS)
+ONT,CA,ONT,America/Los_Angeles,same code,0.0,ONTARIO INTL ARPT
+ORD,IL,ORD,America/Chicago,same code,3.1,Chicago OHare
+ORF,VA,ORF,America/New_York,same code,1.3,NORFOLK INTL ARPT
+ORH,MA,ORH,America/New_York,same code,0.0,Worcester
+OTH,OR,OTH,America/Los_Angeles,same code,0.3,North Bend
+OTZ,AK,PAOT,America/Nome,nearest,0.4,Kotzebue / Wien
+PAH,KY,PAH,America/Chicago,same code,0.5,PADUCAH/BARKLEY
+PBG,NY,PBG,America/New_York,same code,,Plattsburgh AFB
+PBI,FL,DJT,America/New_York,nearest,0.4,WEST PALM BEACH
+PDX,OR,PDX,America/Los_Angeles,same code,0.3,PORTLAND INTL ARPT
+PHF,VA,PHF,America/New_York,same code,0.0,NEWPORT NEWS
+PHL,PA,PHL,America/New_York,same code,1.3,Philadelphia Intl
+PHX,AZ,PHX,America/Phoenix,same code,0.3,PHOENIX/SKY HARBOR
+PIA,IL,PIA,America/Chicago,same code,0.9,PEORIA
+PIB,MS,PIB,America/Chicago,same code,0.0,PINE BELT RGNL AWOS
+PIH,ID,PIH,America/Boise,same code,0.2,POCATELLO MUNICIPAL
+PIT,PA,PIT,America/New_York,same code,0.0,PITTSBURGH INTL
+PLN,MI,PLN,America/Detroit,same code,0.0,PELLSTON
+PNS,FL,PNS,America/Chicago,same code,0.5,PENSACOLA REGIONAL
+PPG,AS,NSTU,Pacific/Pago_Pago,manual,,
+PSC,WA,PSC,America/Los_Angeles,same code,0.0,PASCO/TRI-CITIES
+PSE,PR,TJPS,America/Puerto_Rico,nearest,0.0,Ponce
+PSG,AK,PAPG,America/Juneau,nearest,0.4,Petersburg
+PSP,CA,PSP,America/Los_Angeles,same code,0.1,PALM SPRINGS RGNL
+PUB,CO,PUB,America/Denver,same code,0.2,PUEBLO MEMORIAL(AW)
+PVD,RI,PVD,America/New_York,same code,0.4,PROVIDENCE/GREEN
+PWM,ME,PWM,America/New_York,same code,0.5,PORTLAND INTL JET
+RAP,SD,RAP,America/Denver,same code,0.0,RAPID CITY
+RDD,CA,RDD,America/Los_Angeles,same code,0.0,REDDING MUNICIPAL
+RDM,OR,RDM,America/Los_Angeles,same code,0.0,REDMOND (AWOS)
+RDU,NC,RDU,America/New_York,same code,1.7,Raleigh / Durham
+RHI,WI,RHI,America/Chicago,same code,0.0,RHINELANDER
+RIC,VA,RIC,America/New_York,same code,0.8,RICHMOND/BYRD FIELD
+RKS,WY,RKS,America/Denver,same code,0.0,ROCK SPRINGS
+RNO,NV,RNO,America/Los_Angeles,same code,1.7,Reno - Tahoe
+ROA,VA,ROA,America/New_York,same code,0.9,Roanoke Muni
+ROC,NY,ROC,America/New_York,same code,0.4,ROCHESTER/MONROE CO
+ROW,NM,ROW,America/Denver,same code,0.2,ROSWELL/INDUSTRIAL
+RST,MN,RST,America/Chicago,same code,0.7,ROCHESTER
+RSW,FL,RSW,America/New_York,same code,0.3,FT MYERS/SW FLORIDA
+SAF,NM,SAF,America/Denver,same code,0.1,SANTA FE CO. MUNI
+SAN,CA,SAN,America/Los_Angeles,same code,0.5,SAN DIEGO/LINDBERG
+SAT,TX,SAT,America/Chicago,same code,0.5,San Antonio
+SAV,GA,SAV,America/New_York,same code,0.4,Savannah - Hilton Head
+SBA,CA,SBA,America/Los_Angeles,same code,0.3,SANTA BARBARA MUNI
+SBN,IN,SBN,America/Indiana/Indianapolis,same code,0.3,SOUTH BEND
+SBP,CA,SBP,America/Los_Angeles,same code,0.2,San Luis Obispo
+SCC,AK,PASC,America/Anchorage,nearest,0.0,Deadhorse
+SCE,PA,UNV,America/New_York,nearest,0.3,STATE COLLEGE
+SDF,KY,SDF,America/New_York,same code,0.6,Louisville Intl
+SEA,WA,SEA,America/Los_Angeles,same code,0.6,SEATTLE-TACOMA INTL
+SFO,CA,SFO,America/Los_Angeles,same code,0.0,SAN FRANCISCO INTL
+SGF,MO,SGF,America/Chicago,same code,0.6,SPRINGFIELD
+SGU,UT,SGU,America/Denver,same code,9.5,St George
+SHV,LA,SHV,America/Chicago,same code,0.1,SHREVEPORT REGIONAL
+SIT,AK,PASI,America/Juneau,nearest,0.0,SITKA/JAPONSKI ARPT (ASOS)
+SJC,CA,SJC,America/Los_Angeles,same code,0.5,SAN JOSE INTL A
+SJT,TX,SJT,America/Chicago,same code,0.7,SAN ANGELO/MATHIS
+SJU,PR,TJSJ,America/Puerto_Rico,nearest,1.2,San Juan
+SLC,UT,SLC,America/Denver,same code,1.1,SALT LAKE CITY INTL
+SMF,CA,SMF,America/Los_Angeles,same code,0.0,SACRAMENTO METRO
+SMX,CA,SMX,America/Los_Angeles,same code,0.7,SANTA MARIA PUBLIC
+SNA,CA,SNA,America/Los_Angeles,same code,0.0,SANTA ANA/JON-WAYNE
+SPI,IL,SPI,America/Chicago,same code,0.5,SPRINGFIELD
+SPS,TX,SPS,America/Chicago,same code,1.1,WICHITA FALLS/SHEP
+SRQ,FL,SRQ,America/New_York,same code,0.8,SARASOTA-BRADENTON
+STC,MN,STC,America/Chicago,same code,0.6,ST. CLOUD
+STL,MO,STL,America/Chicago,same code,1.3,ST. LOUIS
+STT,VI,TIST,Atlantic/Bermuda,nearest,0.0,St. Thomas
+STX,VI,TISX,Atlantic/Bermuda,nearest,0.7,St. Croix Island
+SUN,ID,SUN,America/Boise,same code,0.9,Hailey - Friedman Memorial
+SUX,IA,SUX,America/Chicago,same code,1.3,SIOUX CITY
+SWF,NY,SWF,America/New_York,same code,0.0,NEWBURGH/STEWART
+SYR,NY,SYR,America/New_York,same code,0.0,SYRACUSE/HANCOCK
+TLH,FL,TLH,America/New_York,same code,0.4,TALLAHASSEE RGNL
+TOL,OH,TOL,America/New_York,same code,0.2,Toledo
+TPA,FL,TPA,America/New_York,same code,1.7,TAMPA INTL AIRPORT
+TRI,TN,TRI,America/New_York,same code,0.0,BRISTOL/TRI-CITY
+TTN,NJ,TTN,America/New_York,same code,0.2,TRENTON/MERCER CO.
+TUL,OK,TUL,America/Chicago,same code,0.0,TULSA INTL ARPT(AW)
+TUS,AZ,TUS,America/Phoenix,same code,0.5,TUCSON INTL AIRPORT
+TVC,MI,TVC,America/Detroit,same code,0.0,TRAVERSE CIT
+TWF,ID,TWF,America/Boise,same code,0.0,TWIN FALLS/JOSLIN
+TXK,AR,TXK,America/Chicago,same code,0.0,TEXARKANA RGNL/WEBB
+TYR,TX,TYR,America/Chicago,same code,0.0,TYLER/POUNDS FLD
+TYS,TN,TYS,America/New_York,same code,0.9,KNOXVILLE MUNICIPAL
+UST,FL,SGJ,America/New_York,manual,,
+VEL,UT,VEL,America/Denver,same code,0.0,VERNAL
+VLD,GA,VLD,America/New_York,same code,0.0,VALDOSTA REGIONAL
+VPS,FL,VPS,America/Chicago,same code,0.0,EGLIN AFB/VALPARAIS
+WRG,AK,PAWG,America/Juneau,nearest,0.0,WRANGELL
+WYS,MT,WYS,America/Denver,same code,0.0,West Yellowstone
+XNA,AR,XNA,America/Chicago,same code,0.0,NORTHWEST ARKANSAS REGIONAL APT
+YAK,AK,PAYA,America/Yakutat,nearest,1.1,Yakutat
+YUM,AZ,NYL,America/Phoenix,manual,,Yuma MCAS / Yuma Intl

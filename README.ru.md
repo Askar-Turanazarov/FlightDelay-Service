@@ -189,7 +189,7 @@ DESTINATION_AIRPORT, ROUTE, IS_WEEKEND, IS_NIGHT`. Время обучения: 
 
 **Ограничения.** Модель училась на погоде, которая была на самом деле, а приложение принимает прогноз,
 поэтому в реальной работе качество ниже 0.698. Полный отчёт: `reports/metrics/weather_model_results.txt`.
-Скриптов обучения этой модели в репозитории пока нет.
+Скрипты обучения и шаги пересборки: [`training/weather/`](training/weather/README.md) (описание на английском).
 
 ### Компактная дипломная модель
 
@@ -327,6 +327,8 @@ python src/train_compact.py        # компактная модель-> models/
 Оба скрипта используют один загрузчик, одно разбиение и одни параметры; без GPU поставьте внутри них
 `task_type="CPU"` (намного медленнее). Компактный скрипт также пишет `reports/metrics/compact_model_results.txt`.
 
+У модели с погодой свои шесть шагов (загрузка погоды, сборка данных, обучение, калибровка): [`training/weather/`](training/weather/README.md).
+
 EDA и история обучения — в `notebooks/01_EDA_and_Training.ipynb`.
 
 ## Структура проекта
@@ -345,6 +347,7 @@ flight_delay_service/
 ├── models/                    lookup_data.joblib, calibration_weather.json (+ скачиваемые pickle моделей)
 ├── reports/figures/           PR-кривая, важность признаков, матрицы ошибок
 ├── reports/metrics/           сырые отчёты с метриками обучения
+├── training/weather/          модель с погодой: загрузка METAR, сборка данных, обучение, калибровка
 ├── notebooks/                 01_EDA_and_Training.ipynb, archive/ с экспериментами
 ├── docs/                      Report.pdf, Tech_report.pdf (на русском), img/{en,uz,ru}/ скриншоты
 ├── space/                     статическая страница для Hugging Face Space (встраивает живую демку)

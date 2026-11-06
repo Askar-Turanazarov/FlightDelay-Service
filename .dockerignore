@@ -72,6 +72,7 @@ LICENSE
 docs/
 space/
 reports/metrics/
+training/
 *.pdf
 
 # ---------- OS / misc ----------

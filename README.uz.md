@@ -195,7 +195,7 @@ reyslarning mos ravishda 8 %, 16 %, 25 % va 48 % i kechikkan.
 
 **Cheklovlar.** Model haqiqatda boʻlgan ob-havoda oʻrgangan, ilova esa prognozni qabul qiladi, shuning
 uchun amalda natija 0.698 dan past. Toʻliq hisobot: `reports/metrics/weather_model_results.txt`.
-Bu modelning oʻqitish skriptlari hozircha shu repozitoriyda yoʻq.
+Oʻqitish skriptlari va qayta yigʻish qadamlari: [`training/weather/`](training/weather/README.md) (ingliz tilida).
 
 ### Ixcham diplom modeli
 
@@ -333,6 +333,8 @@ python src/train_compact.py        # ixcham model -> models/model_pipeline_compa
 Ikkala skript ham bir xil yuklagich, boʻlinish va parametrlardan foydalanadi; GPU boʻlmasa, ularning ichida
 `task_type="CPU"` qoʻying (ancha sekin). Ixcham skript `reports/metrics/compact_model_results.txt` ni ham yozadi.
 
+Ob-havo modelining oʻz olti qadami bor (ob-havoni yuklab olish, jadvalni yigʻish, oʻqitish, kalibrlash): [`training/weather/`](training/weather/README.md).
+
 EDA va oʻqitish jarayoni `notebooks/01_EDA_and_Training.ipynb` da bayon qilingan.
 
 ## Loyiha tuzilmasi
@@ -351,6 +353,7 @@ flight_delay_service/
 ├── models/                    lookup_data.joblib, calibration_weather.json (+ yuklab olinadigan model pickle fayllari)
 ├── reports/figures/           PR egri chizigʻi, omillar ahamiyati, xatolar matritsalari
 ├── reports/metrics/           oʻqitishdan olingan xom koʻrsatkich hisobotlari
+├── training/weather/          ob-havo modeli: METAR yuklab olish, jadvalni yigʻish, oʻqitish, kalibrlash
 ├── notebooks/                 01_EDA_and_Training.ipynb, archive/ — tajribalar
 ├── docs/                      Report.pdf, Tech_report.pdf (rus tilida), img/{en,uz,ru}/ — skrinshotlar
 ├── space/                     Hugging Face Space uchun statik sahifa (jonli demoni ichiga oladi)
